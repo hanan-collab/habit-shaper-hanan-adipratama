@@ -8,6 +8,7 @@ export type WeeklyStatisticsModel = {
   endDate: string;
   completedDays: number;
   missedDays: number;
+  eligibleDays: number;
   completionRate: number;
 };
 export type HabitStatisticsModel = {
@@ -15,6 +16,12 @@ export type HabitStatisticsModel = {
   type: Habit['type'];
   currentStreak: number;
   longestStreak: number;
+  totalCompletions: number;
+  completedThisWeek: number;
+  missedThisWeek: number;
+  eligibleDaysThisWeek: number;
+  weeklyCompletionRate: number;
   weekly: WeeklyStatisticsModel;
   lastRelapse: string | null;
+  lastRelapseDate: string | null;
 };

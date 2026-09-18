@@ -35,8 +35,9 @@ function eachDate(from: string, to: string) {
 }
 
 function buildStreaks(start: string, today: string, completed: Set<string>) {
+  const endpoint = completed.has(today) ? today : addDays(today, -1);
   let current = 0;
-  for (let cursor = today; cursor >= start && completed.has(cursor); cursor = addDays(cursor, -1)) current += 1;
+  for (let cursor = endpoint; cursor >= start && completed.has(cursor); cursor = addDays(cursor, -1)) current += 1;
   let longest = 0;
   let running = 0;
   for (const day of eachDate(start, today)) {
@@ -73,20 +74,29 @@ export function createStatisticsService(repository: StatisticsRepository, now: (
       : eligible.filter((value) => relapses.includes(value)).length;
     const completedDays = eligible.length - missedDays;
     const completionRate = eligible.length === 0 ? 0 : Math.round((completedDays / eligible.length) * 10000) / 100;
+    const totalCompletions = source.type === HabitKind.Build ? completed.size : 0;
+    const lastRelapseDate = relapses.at(-1) ?? null;
     return {
       habitId: source.id,
       type: source.type,
       currentStreak: streaks.current,
       longestStreak: streaks.longest,
+      totalCompletions,
+      completedThisWeek: completedDays,
+      missedThisWeek: missedDays,
+      eligibleDaysThisWeek: eligible.length,
+      weeklyCompletionRate: completionRate,
       weekly: {
         period: StatisticsPeriod.CurrentWeek,
         startDate: eligible.length ? eligibleStart : today,
         endDate: today,
         completedDays,
         missedDays,
+        eligibleDays: eligible.length,
         completionRate,
       },
-      lastRelapse: relapses.at(-1) ?? null,
+      lastRelapse: lastRelapseDate,
+      lastRelapseDate,
     };
   };
   return {

@@ -27,9 +27,47 @@ describe('statistics service', () => {
     const result = await createStatisticsService(repository(source), now).get('user-1', 'UTC', 'habit-1');
     expect(result).toMatchObject({
       currentStreak: 2, longestStreak: 2,
-      weekly: { startDate: '2026-09-14', endDate: '2026-09-18', completedDays: 4, missedDays: 1, completionRate: 80 },
+      totalCompletions: 4, completedThisWeek: 4, missedThisWeek: 1, eligibleDaysThisWeek: 5,
+      weeklyCompletionRate: 80,
+      weekly: { startDate: '2026-09-14', endDate: '2026-09-18', completedDays: 4, missedDays: 1, eligibleDays: 5, completionRate: 80 },
       lastRelapse: null,
     });
+  });
+
+  test('keeps a BUILD streak active when its last completion was yesterday', async () => {
+    const source = {
+      ...habit('BUILD'),
+      events: [
+        event('COMPLETED', '2026-09-16'), event('COMPLETED', '2026-09-17'),
+      ],
+    };
+    const result = await createStatisticsService(repository(source), now).get('user-1', 'UTC', 'habit-1');
+    expect(result).toMatchObject({ currentStreak: 2, longestStreak: 2, totalCompletions: 2 });
+  });
+
+  test('excludes future events and days before the habit start date', async () => {
+    const source = {
+      ...habit('BUILD', '2026-09-16'),
+      events: [
+        event('COMPLETED', '2026-09-15'), event('COMPLETED', '2026-09-17'),
+        event('COMPLETED', '2026-09-18'), event('COMPLETED', '2026-09-19'),
+      ],
+    };
+    const result = await createStatisticsService(repository(source), now).get('user-1', 'UTC', 'habit-1');
+    expect(result).toMatchObject({
+      currentStreak: 2, totalCompletions: 2,
+      completedThisWeek: 2, missedThisWeek: 1, eligibleDaysThisWeek: 3,
+    });
+  });
+
+  test('uses the user timezone when deciding the current calendar day', async () => {
+    const source = {
+      ...habit('BUILD', '2026-09-18'),
+      events: [event('COMPLETED', '2026-09-18'), event('COMPLETED', '2026-09-19')],
+    };
+    const nearMidnight = () => new Date('2026-09-18T18:00:00.000Z');
+    const result = await createStatisticsService(repository(source), nearMidnight).get('user-1', 'Asia/Jakarta', 'habit-1');
+    expect(result).toMatchObject({ currentStreak: 2, totalCompletions: 2, eligibleDaysThisWeek: 2 });
   });
 
   test('calculates BREAK clean intervals and last relapse', async () => {
