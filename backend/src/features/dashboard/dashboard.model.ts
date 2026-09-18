@@ -1,6 +1,7 @@
 import type { Goal, Habit, HabitEvent } from '@prisma/client';
 import type { DashboardHabitStatus } from './dashboard.enum.js';
 import type { HabitStatisticsModel } from '../statistics/statistics.model.js';
+import type { goalResponse } from '../goals/goal.model.js';
 
 export type DashboardHabitSourceModel = Habit & { events: HabitEvent[]; goals: Goal[] };
 export type DashboardHabitModel = {
@@ -17,5 +18,5 @@ export type DashboardModel = {
   date: string;
   summary: { activeHabits: number; activeGoals: number };
   habits: DashboardHabitModel[];
-  goals: unknown[];
+  goals: ReturnType<typeof goalResponse>[];
 };

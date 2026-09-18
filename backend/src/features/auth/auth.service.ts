@@ -30,7 +30,13 @@ export function createAuthService(repository: AuthRepository, config: ServiceCon
       const passwordHash = await bcrypt.hash(input.password, config.bcryptRounds);
       const session = newSession(config);
       try {
-        const user = await repository.createUserWithSession({ ...input, passwordHash, ...session });
+        const user = await repository.createUserWithSession({
+          email: input.email,
+          passwordHash,
+          timezone: input.timezone,
+          tokenHash: session.tokenHash,
+          expiresAt: session.expiresAt,
+        });
         return { user, token: session.token, expiresAt: session.expiresAt };
       } catch (error) {
         if (error instanceof DuplicateEmailRepositoryError) {
