@@ -11,6 +11,8 @@ import { createStatisticsRepository } from './features/statistics/statistics.rep
 import { createStatisticsService } from './features/statistics/statistics.service.js';
 import { createGoalRepository } from './features/goals/goal.repository.js';
 import { createGoalService } from './features/goals/goal.service.js';
+import { createDashboardRepository } from './features/dashboard/dashboard.repository.js';
+import { createDashboardService } from './features/dashboard/dashboard.service.js';
 import { prisma } from './lib/prisma.js';
 
 const authRepository = createAuthRepository(prisma);
@@ -22,12 +24,14 @@ const healthService = createHealthService(createHealthRepository(() => prisma.$q
 const habitService = createHabitService(createHabitRepository(prisma));
 const statisticsService = createStatisticsService(createStatisticsRepository(prisma));
 const goalService = createGoalService(createGoalRepository(prisma), statisticsService);
+const dashboardService = createDashboardService(createDashboardRepository(prisma), statisticsService, goalService);
 const app = createApp({
   healthService,
   authService,
   habitService,
   statisticsService,
   goalService,
+  dashboardService,
   cookieSecure: env.COOKIE_SECURE,
   frontendDirectory: fileURLToPath(new URL('../../frontend/dist/', import.meta.url)),
 });

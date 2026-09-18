@@ -156,6 +156,11 @@ test('register, session authentication, onboarding, logout, and login work end t
     const habits = await call('/api/habits', { headers: { cookie: loginCookie } });
     assert.equal(habits.status, 200);
     assert.equal((await habits.json()).habits.length, 2);
+    const dashboard = await call('/api/dashboard', { headers: { cookie: loginCookie } });
+    assert.equal(dashboard.status, 200);
+    const dashboardBody = (await dashboard.json()).dashboard;
+    assert.deepEqual(dashboardBody.summary, { activeHabits: 2, activeGoals: 0 });
+    assert.equal(dashboardBody.habits.length, 2);
 
     const wrongPassword = await call('/api/auth/login', {
       method: 'POST', body: JSON.stringify({ email, password: 'incorrect password' }),

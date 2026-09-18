@@ -12,6 +12,8 @@ import { createStatisticsRoute } from './features/statistics/statistics.route.js
 import type { StatisticsService } from './features/statistics/statistics.service.js';
 import { createGoalRoute } from './features/goals/goal.route.js';
 import type { GoalService } from './features/goals/goal.service.js';
+import { createDashboardRoute } from './features/dashboard/dashboard.route.js';
+import type { DashboardService } from './features/dashboard/dashboard.service.js';
 
 type AppOptions = {
   healthService: HealthService;
@@ -19,6 +21,7 @@ type AppOptions = {
   habitService?: HabitService;
   statisticsService?: StatisticsService;
   goalService?: GoalService;
+  dashboardService?: DashboardService;
   cookieSecure?: boolean;
   frontendDirectory?: string;
 };
@@ -32,6 +35,7 @@ export function createApp(options: AppOptions) {
   if (options.authService) {
     app.use('/api/auth', createAuthRoute(options.authService, { cookieSecure: options.cookieSecure ?? false }));
     if (options.goalService) app.use('/api', createGoalRoute(options.authService, options.goalService));
+    if (options.dashboardService) app.use('/api/dashboard', createDashboardRoute(options.authService, options.dashboardService));
     if (options.statisticsService) app.use('/api/habits', createStatisticsRoute(options.authService, options.statisticsService));
     if (options.habitService) app.use('/api/habits', createHabitRoute(options.authService, options.habitService));
   }

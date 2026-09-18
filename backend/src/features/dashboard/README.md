@@ -1,5 +1,3 @@
 # dashboard
 
-Future dashboard routes, controllers, and aggregation services.
-
-Feature convention: route → controller → service → Prisma → MySQL. Add these files only when implementing the feature; no repository layer is planned for the MVP.
+The dashboard aggregates habits, today's BUILD/BREAK state, calculated statistics, and active goal progress for the authenticated user.
