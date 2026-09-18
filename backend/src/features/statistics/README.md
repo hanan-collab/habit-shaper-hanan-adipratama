@@ -1,5 +1,3 @@
 # statistics
 
-Future shared streak/statistics service calculations. Calculated values are not stored in database columns.
-
-Feature convention: route → controller → service → Prisma → MySQL. Add these files only when implementing the feature; no repository layer is planned for the MVP.
+Statistics are calculated from habit events and never persisted. The current week runs from Monday through today in the user's timezone. BUILD streaks use completed events; BREAK streaks use clean intervals between relapses.

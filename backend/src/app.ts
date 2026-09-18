@@ -8,11 +8,14 @@ import { createHealthRoute } from './features/health/health.route.js';
 import type { HealthService } from './features/health/health.service.js';
 import { createHabitRoute } from './features/habits/habit.route.js';
 import type { HabitService } from './features/habits/habit.service.js';
+import { createStatisticsRoute } from './features/statistics/statistics.route.js';
+import type { StatisticsService } from './features/statistics/statistics.service.js';
 
 type AppOptions = {
   healthService: HealthService;
   authService?: AuthService;
   habitService?: HabitService;
+  statisticsService?: StatisticsService;
   cookieSecure?: boolean;
   frontendDirectory?: string;
 };
@@ -25,6 +28,7 @@ export function createApp(options: AppOptions) {
   app.use('/api/health', createHealthRoute(options.healthService));
   if (options.authService) {
     app.use('/api/auth', createAuthRoute(options.authService, { cookieSecure: options.cookieSecure ?? false }));
+    if (options.statisticsService) app.use('/api/habits', createStatisticsRoute(options.authService, options.statisticsService));
     if (options.habitService) app.use('/api/habits', createHabitRoute(options.authService, options.habitService));
   }
   app.use('/api', (_request, response) => { response.status(404).json({ error: 'Not found' }); });

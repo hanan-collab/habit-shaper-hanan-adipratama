@@ -114,6 +114,9 @@ test('register, session authentication, onboarding, logout, and login work end t
     const detail = await call(`/api/habits/${buildHabit.id}`, { headers: { cookie: loginCookie } });
     assert.equal(detail.status, 200);
     assert.equal((await detail.json()).habit.events.length, 1);
+    const buildStatistics = await call(`/api/habits/${buildHabit.id}/statistics`, { headers: { cookie: loginCookie } });
+    assert.equal(buildStatistics.status, 200);
+    assert.equal((await buildStatistics.json()).statistics.currentStreak, 0);
 
     const breakHabitResponse = await call('/api/habits', {
       method: 'POST', headers: { cookie: loginCookie },
@@ -124,6 +127,9 @@ test('register, session authentication, onboarding, logout, and login work end t
     assert.equal((await call(`/api/habits/${breakHabit.id}/relapses/2026-09-18`, {
       method: 'PUT', headers: { cookie: loginCookie }, body: '{}',
     })).status, 200);
+    const breakStatistics = await call(`/api/habits/${breakHabit.id}/statistics`, { headers: { cookie: loginCookie } });
+    assert.equal(breakStatistics.status, 200);
+    assert.equal((await breakStatistics.json()).statistics.lastRelapse, '2026-09-18');
     const habits = await call('/api/habits', { headers: { cookie: loginCookie } });
     assert.equal(habits.status, 200);
     assert.equal((await habits.json()).habits.length, 2);
