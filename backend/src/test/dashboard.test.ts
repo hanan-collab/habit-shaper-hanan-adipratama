@@ -4,6 +4,7 @@ import type { GoalService } from '../features/goals/goal.service.js';
 import type { DashboardRepository } from '../features/dashboard/dashboard.repository.js';
 import { createDashboardService } from '../features/dashboard/dashboard.service.js';
 import { createStatisticsService } from '../features/statistics/statistics.service.js';
+import { createUserStatisticsService } from '../features/user-statistics/user-statistics.service.js';
 
 const today = new Date().toISOString().slice(0, 10);
 const baseHabit = (type: Habit['type'], id: string): Habit => ({
@@ -26,10 +27,17 @@ test('dashboard aggregates daily state, statistics, and active goal summary', as
   const goals = {
     list: async () => [{ ...activeGoal, activeSlot: undefined, deadline: null, completedDate: null, progress: { currentStreak: 1, remainingDays: 6, percentage: 14.29, overdue: false } }],
   } as unknown as GoalService;
-  const result = await createDashboardService(repository, statistics, goals).get('user-1', 'UTC');
+  const result = await createDashboardService(repository, statistics, goals, createUserStatisticsService()).get('user-1', 'UTC');
   expect(result.summary).toEqual({ activeHabits: 2, activeGoals: 1 });
   expect(result.habits).toEqual(expect.arrayContaining([
     expect.objectContaining({ id: 'build', todayStatus: 'COMPLETED', activeGoalId: 'goal-1' }),
     expect.objectContaining({ id: 'break', todayStatus: 'CLEAN', activeGoalId: null }),
   ]));
+  expect(result.userStatistics).toEqual({
+    totalBuildCompletions: 1,
+    totalGoalsCompleted: 0,
+    bestBuildStreak: 1,
+    bestBreakStreak: expect.any(Number),
+    bestOverallStreak: expect.any(Number),
+  });
 });

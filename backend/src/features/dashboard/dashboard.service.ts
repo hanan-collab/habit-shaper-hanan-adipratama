@@ -5,6 +5,7 @@ import type { StatisticsService } from '../statistics/statistics.service.js';
 import { DashboardHabitStatus } from './dashboard.enum.js';
 import type { DashboardModel } from './dashboard.model.js';
 import type { DashboardRepository } from './dashboard.repository.js';
+import type { UserStatisticsService } from '../user-statistics/user-statistics.service.js';
 
 export interface DashboardService { get(userId: string, timezone: string): Promise<DashboardModel> }
 
@@ -20,11 +21,13 @@ export function createDashboardService(
   repository: DashboardRepository,
   statisticsService: StatisticsService,
   goalService: GoalService,
+  userStatisticsService: UserStatisticsService,
 ): DashboardService {
   return {
     async get(userId, timezone) {
       // Listing goals also synchronizes any ACTIVE goal whose streak has reached its target.
-      const goals = (await goalService.list(userId, timezone)).filter((goal) => goal.status === GoalState.Active);
+      const allGoals = await goalService.list(userId, timezone);
+      const goals = allGoals.filter((goal) => goal.status === GoalState.Active);
       const sources = await repository.listHabits(userId);
       const today = todayIn(timezone);
       const habits = sources.map((habit) => {
@@ -48,6 +51,10 @@ export function createDashboardService(
         summary: { activeHabits: habits.length, activeGoals: goals.length },
         habits,
         goals,
+        userStatistics: userStatisticsService.aggregate(
+          habits.map((habit) => ({ type: habit.type, statistics: habit.statistics })),
+          allGoals.filter((goal) => goal.status === GoalState.Completed).length,
+        ),
       };
     },
   };

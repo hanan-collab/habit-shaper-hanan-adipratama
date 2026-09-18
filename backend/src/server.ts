@@ -16,6 +16,7 @@ import { createDashboardService } from './features/dashboard/dashboard.service.j
 import { createGamificationService } from './features/gamification/gamification.service.js';
 import { createTrackingRepository } from './features/tracking/tracking.repository.js';
 import { createTrackingService } from './features/tracking/tracking.service.js';
+import { createUserStatisticsService } from './features/user-statistics/user-statistics.service.js';
 import { prisma } from './lib/prisma.js';
 
 const authRepository = createAuthRepository(prisma);
@@ -31,7 +32,9 @@ const goalService = createGoalService(createGoalRepository(prisma), statisticsSe
 const trackingService = createTrackingService(
   createTrackingRepository(prisma), statisticsService, goalService, gamificationService,
 );
-const dashboardService = createDashboardService(createDashboardRepository(prisma), statisticsService, goalService);
+const dashboardService = createDashboardService(
+  createDashboardRepository(prisma), statisticsService, goalService, createUserStatisticsService(),
+);
 const app = createApp({
   healthService,
   authService,
