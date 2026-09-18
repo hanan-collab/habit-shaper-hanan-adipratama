@@ -3,6 +3,8 @@ import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { createAuthRepository } from './features/auth/auth.repository.js';
 import { createAuthService } from './features/auth/auth.service.js';
+import { createHealthRepository } from './features/health/health.repository.js';
+import { createHealthService } from './features/health/health.service.js';
 import { prisma } from './lib/prisma.js';
 
 const authRepository = createAuthRepository(prisma);
@@ -10,8 +12,9 @@ const authService = createAuthService(authRepository, {
   bcryptRounds: env.BCRYPT_ROUNDS,
   sessionTtlDays: env.SESSION_TTL_DAYS,
 });
+const healthService = createHealthService(createHealthRepository(() => prisma.$queryRaw`SELECT 1`));
 const app = createApp({
-  checkDatabase: () => prisma.$queryRaw`SELECT 1`,
+  healthService,
   authService,
   cookieSecure: env.COOKIE_SECURE,
   frontendDirectory: fileURLToPath(new URL('../../frontend/dist/', import.meta.url)),

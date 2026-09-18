@@ -4,10 +4,11 @@ import path from 'node:path';
 import { AppError } from './common/app-error.js';
 import { createAuthRoute } from './features/auth/auth.route.js';
 import type { AuthService } from './features/auth/auth.service.js';
-import { healthRouter } from './features/health/health.routes.js';
+import { createHealthRoute } from './features/health/health.route.js';
+import type { HealthService } from './features/health/health.service.js';
 
 type AppOptions = {
-  checkDatabase: () => Promise<unknown>;
+  healthService: HealthService;
   authService?: AuthService;
   cookieSecure?: boolean;
   frontendDirectory?: string;
@@ -18,7 +19,7 @@ export function createApp(options: AppOptions) {
   app.disable('x-powered-by');
   app.use(express.json({ limit: '32kb' }));
   app.use(cookieParser());
-  app.use('/api/health', healthRouter(options.checkDatabase));
+  app.use('/api/health', createHealthRoute(options.healthService));
   if (options.authService) {
     app.use('/api/auth', createAuthRoute(options.authService, { cookieSecure: options.cookieSecure ?? false }));
   }
