@@ -134,6 +134,7 @@ PATCH  /api/auth/onboarding
 GET    /api/habits
 POST   /api/habits
 GET    /api/habits/:habitId
+GET    /api/habits/:habitId/statistics
 PATCH  /api/habits/:habitId
 DELETE /api/habits/:habitId
 
@@ -200,15 +201,14 @@ Express menyajikan hasil build React dan API sehingga aplikasi menggunakan satu 
 Backend menggunakan feature-based MVC dengan service layer:
 
 ```text
-Route -> Controller -> Service -> Prisma Model -> MySQL
+Route -> Controller -> Service -> Repository -> Prisma Model -> MySQL
 ```
 
 - Route: URL, authentication middleware, dan validation middleware.
 - Controller: membaca request dan membentuk response.
 - Service: business rules, ownership validation, streak, statistics, dan goal progress.
+- Repository: query Prisma dan pemetaan persistence untuk satu fitur.
 - Model: Prisma schema dan database relations.
-
-Repository layer tidak digunakan pada MVP kecuali query menjadi cukup kompleks untuk membutuhkan abstraction tambahan.
 
 ### Frontend architecture
 

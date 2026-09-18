@@ -36,7 +36,7 @@ Run the full test workflow after startup:
 docker compose --profile test run --build --rm test
 ```
 
-The optional test service runs both TypeScript checks, Vitest/React Testing Library/Supertest tests, and stack smoke tests. It returns a nonzero exit code on failure. Smoke tests request the actual production HTML/JavaScript and API, then create transactional database fixtures to check all four models and event uniqueness. Fixtures are rolled back, including after assertion failures. No persistent seed users are created.
+The optional test service runs TypeScript checks, Vitest/React Testing Library/Supertest tests, and stack smoke tests. It returns a nonzero exit code on failure. Smoke tests exercise the production HTML/JavaScript, every API feature, all five database models, migrations, ownership, event rules, and active-goal uniqueness. Test users and their dependent records are removed afterward.
 
 To verify migration redeployment and persistence:
 
@@ -93,11 +93,11 @@ For local backend development, set `DATABASE_URL` in your shell to the Compose d
 ## Structure and implementation boundary
 
 - Frontend: `src/app` contains the shell; `src/features` reserves landing, auth, onboarding, dashboard, habits, and goals. Shared components, libraries, styles, and types have dedicated directories. React Router, TanStack Query, React Hook Form, and Zod are installed for future features.
-- Backend: feature-based MVC with a service layer (`route → controller → service → Prisma → MySQL`). Authentication is implemented; remaining feature README placeholders explain future responsibilities. There is no repository layer.
+- Backend: each feature uses `route → controller → service → repository → Prisma → MySQL`, with dedicated DTO, model, and enum modules. Routes own URLs/middleware, controllers own HTTP mapping, services enforce business rules, and repositories isolate database queries.
 - Database: `User`, `Session`, `Habit`, `HabitEvent`, and `Goal`, UUID IDs, enum fields, foreign keys with dependent-row cascade deletion, unique email, unique session-token hash, and unique habit/date events. Calendar dates use MySQL `DATE`; audit timestamps use `DATETIME(3)`. Optional fields are nullable and goals default to `ACTIVE`.
-- Runtime: `GET /api/health` reports database readiness. `/api/auth` implements registration, login, logout, current-user lookup, and onboarding completion. Unknown API paths return JSON `404`; browser page routes serve the React shell.
+- Runtime: the backend implements health, authentication/onboarding, habit/event management, streak statistics, goals, and dashboard aggregation. Unknown API paths return JSON `404`; browser page routes serve the React shell.
 
-Habit/goal ownership checks, CRUD, event-type compatibility, positive goal target validation, one-active-goal enforcement, streak calculations, frontend auth screens, and protected frontend routes remain unimplemented.
+Frontend product screens and protected frontend routing remain unimplemented.
 
 ## Authentication API
 
@@ -120,8 +120,38 @@ curl -i -b cookies.txt -X PATCH -H "Content-Type: application/json" -d '{"comple
 curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3000/api/auth/logout
 ```
 
-## Intended streak behavior (future implementation)
+## Habit, statistics, goal, and dashboard APIs
 
-As defined in `plan.md`, BUILD habits record daily COMPLETED events; BREAK habits record RELAPSED events, with no relapse meaning the user remains clean. At most one event is stored per habit/calendar date. Future services must use the user's timezone, calculate current/longest streak and weekly statistics, and derive optional consecutive-day goal progress without persisting calculated columns. Deadline handling and exact date-boundary behavior will be resolved during feature implementation.
+All endpoints below require the `habit_session` cookie:
+
+```text
+GET    /api/habits
+POST   /api/habits                              { name, description?, type, startDate }
+GET    /api/habits/:habitId
+PATCH  /api/habits/:habitId                     { name?, description?, type?, startDate? }
+DELETE /api/habits/:habitId
+
+PUT    /api/habits/:habitId/completions/:date   { note? }
+DELETE /api/habits/:habitId/completions/:date
+PUT    /api/habits/:habitId/relapses/:date      { note? }
+DELETE /api/habits/:habitId/relapses/:date
+GET    /api/habits/:habitId/statistics
+
+GET    /api/goals
+POST   /api/habits/:habitId/goals               { title, targetStreakDays, deadline? }
+PATCH  /api/goals/:goalId                       { title?, targetStreakDays?, deadline? }
+DELETE /api/goals/:goalId
+POST   /api/goals/:goalId/cancel
+
+GET    /api/dashboard
+```
+
+Dates use `YYYY-MM-DD`. Habit start dates and events cannot be in the future in the user's stored timezone. BUILD habits accept only completion events; BREAK habits accept only relapse events. PUT event operations are idempotent, and all resource lookup is scoped to the authenticated user.
+
+## Streak behavior
+
+BUILD current streak counts consecutive completion events ending today. BREAK current streak counts clean days since the most recent relapse, with a relapse today producing a streak of zero. Weekly statistics cover Monday through today in the user's timezone and begin no earlier than the habit start date. Calculated statistics and goal progress are not stored as columns.
+
+Goals require a positive streak target. MySQL enforces at most one active goal per habit with a unique active slot. Reaching the target completes the goal when goals or dashboard data are read; cancelling/completing releases the slot. Deadlines cannot be created or changed to a past date, and overdue state is calculated for active goals.
 
 Feature implementation should use meaningful incremental commits as requested in `plan.md`.
