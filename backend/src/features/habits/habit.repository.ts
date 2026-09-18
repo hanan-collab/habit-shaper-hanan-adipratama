@@ -1,4 +1,4 @@
-import type { HabitType, HabitEventType, Prisma, PrismaClient } from '@prisma/client';
+import type { HabitType, Prisma, PrismaClient } from '@prisma/client';
 import type { HabitDetailModel, HabitEventModel, HabitModel } from './habit.model.js';
 
 export interface HabitRepository {
@@ -9,8 +9,6 @@ export interface HabitRepository {
   delete(habitId: string): Promise<void>;
   countEvents(habitId: string): Promise<number>;
   findEarliestEvent(habitId: string): Promise<HabitEventModel | null>;
-  upsertEvent(data: { habitId: string; type: HabitEventType; date: Date; note?: string | null }): Promise<HabitEventModel>;
-  deleteEvent(habitId: string, date: Date, type: HabitEventType): Promise<void>;
 }
 
 export function createHabitRepository(prisma: PrismaClient): HabitRepository {
@@ -29,16 +27,6 @@ export function createHabitRepository(prisma: PrismaClient): HabitRepository {
     countEvents(habitId) { return prisma.habitEvent.count({ where: { habitId } }); },
     findEarliestEvent(habitId) {
       return prisma.habitEvent.findFirst({ where: { habitId }, orderBy: { date: 'asc' } });
-    },
-    upsertEvent(data) {
-      return prisma.habitEvent.upsert({
-        where: { habitId_date: { habitId: data.habitId, date: data.date } },
-        create: data,
-        update: { type: data.type, note: data.note },
-      });
-    },
-    async deleteEvent(habitId, date, type) {
-      await prisma.habitEvent.deleteMany({ where: { habitId, date, type } });
     },
   };
 }

@@ -1,6 +1,7 @@
 import type { GoalStatus, Prisma } from '@prisma/client';
 import { AppError } from '../../common/app-error.js';
 import type { StatisticsService } from '../statistics/statistics.service.js';
+import type { GoalGamificationState } from '../gamification/gamification.model.js';
 import type { CreateGoalDto, UpdateGoalDto } from './goal.dto.js';
 import { goalDate } from './goal.dto.js';
 import { GoalErrorCode, GoalState } from './goal.enum.js';
@@ -13,6 +14,8 @@ export interface GoalService {
   update(userId: string, timezone: string, goalId: string, input: UpdateGoalDto): Promise<ReturnType<typeof goalResponse>>;
   delete(userId: string, goalId: string): Promise<void>;
   cancel(userId: string, timezone: string, goalId: string): Promise<ReturnType<typeof goalResponse>>;
+  gamificationState(goal: GoalModel, currentStreak: number): GoalGamificationState;
+  syncAfterStreakChange(goal: GoalModel | null, timezone: string, currentStreak: number): Promise<GoalGamificationState | null>;
 }
 
 function todayIn(timezone: string) {
@@ -24,6 +27,14 @@ function todayIn(timezone: string) {
 }
 
 export function createGoalService(repository: GoalRepository, statistics: StatisticsService): GoalService {
+  const gamificationState = (goal: GoalModel, currentStreak: number): GoalGamificationState => ({
+    id: goal.id,
+    status: goal.status,
+    currentProgress: currentStreak,
+    targetStreakDays: goal.targetStreakDays,
+    percentage: Math.min(100, Math.round((currentStreak / goal.targetStreakDays) * 10000) / 100),
+    remainingDays: Math.max(0, goal.targetStreakDays - currentStreak),
+  });
   const render = (goal: GoalModel, source: GoalWithSourceModel['habit'], timezone: string) => {
     const currentStreak = statistics.calculate(source, timezone).currentStreak;
     const remainingDays = Math.max(0, goal.targetStreakDays - currentStreak);
@@ -55,6 +66,19 @@ export function createGoalService(repository: GoalRepository, statistics: Statis
     }
   };
   return {
+    gamificationState,
+    async syncAfterStreakChange(goal, timezone, currentStreak) {
+      if (!goal) return null;
+      if (goal.status !== GoalState.Active || currentStreak < goal.targetStreakDays) {
+        return gamificationState(goal, currentStreak);
+      }
+      const completed = await repository.update(goal.id, {
+        status: GoalState.Completed as GoalStatus,
+        activeSlot: null,
+        completedDate: goalDate(todayIn(timezone)),
+      });
+      return gamificationState(completed, currentStreak);
+    },
     async list(userId, timezone) {
       const goals = await repository.list(userId);
       return Promise.all(goals.map(async (goal) => render(await synchronize(goal, timezone), goal.habit, timezone)));

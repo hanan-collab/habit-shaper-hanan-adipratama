@@ -14,6 +14,8 @@ import { createGoalRoute } from './features/goals/goal.route.js';
 import type { GoalService } from './features/goals/goal.service.js';
 import { createDashboardRoute } from './features/dashboard/dashboard.route.js';
 import type { DashboardService } from './features/dashboard/dashboard.service.js';
+import { createTrackingRoute } from './features/tracking/tracking.route.js';
+import type { TrackingService } from './features/tracking/tracking.service.js';
 
 type AppOptions = {
   healthService: HealthService;
@@ -22,6 +24,7 @@ type AppOptions = {
   statisticsService?: StatisticsService;
   goalService?: GoalService;
   dashboardService?: DashboardService;
+  trackingService?: TrackingService;
   cookieSecure?: boolean;
   frontendDirectory?: string;
 };
@@ -37,6 +40,7 @@ export function createApp(options: AppOptions) {
     if (options.goalService) app.use('/api', createGoalRoute(options.authService, options.goalService));
     if (options.dashboardService) app.use('/api/dashboard', createDashboardRoute(options.authService, options.dashboardService));
     if (options.statisticsService) app.use('/api/habits', createStatisticsRoute(options.authService, options.statisticsService));
+    if (options.trackingService) app.use('/api/habits', createTrackingRoute(options.authService, options.trackingService));
     if (options.habitService) app.use('/api/habits', createHabitRoute(options.authService, options.habitService));
   }
   app.use('/api', (_request, response) => { response.status(404).json({ error: 'Not found' }); });

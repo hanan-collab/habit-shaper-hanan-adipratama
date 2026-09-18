@@ -13,9 +13,5 @@ export function createHabitRoute(authService: AuthService, habitService: HabitSe
   router.get('/:habitId', controller.get);
   router.patch('/:habitId', controller.update);
   router.delete('/:habitId', controller.delete);
-  router.put('/:habitId/completions/:date', controller.putCompletion);
-  router.delete('/:habitId/completions/:date', controller.deleteCompletion);
-  router.put('/:habitId/relapses/:date', controller.putRelapse);
-  router.delete('/:habitId/relapses/:date', controller.deleteRelapse);
   return router;
 }

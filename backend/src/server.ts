@@ -13,6 +13,9 @@ import { createGoalRepository } from './features/goals/goal.repository.js';
 import { createGoalService } from './features/goals/goal.service.js';
 import { createDashboardRepository } from './features/dashboard/dashboard.repository.js';
 import { createDashboardService } from './features/dashboard/dashboard.service.js';
+import { createGamificationService } from './features/gamification/gamification.service.js';
+import { createTrackingRepository } from './features/tracking/tracking.repository.js';
+import { createTrackingService } from './features/tracking/tracking.service.js';
 import { prisma } from './lib/prisma.js';
 
 const authRepository = createAuthRepository(prisma);
@@ -21,9 +24,13 @@ const authService = createAuthService(authRepository, {
   sessionTtlDays: env.SESSION_TTL_DAYS,
 });
 const healthService = createHealthService(createHealthRepository(() => prisma.$queryRaw`SELECT 1`));
-const habitService = createHabitService(createHabitRepository(prisma));
 const statisticsService = createStatisticsService(createStatisticsRepository(prisma));
+const gamificationService = createGamificationService();
+const habitService = createHabitService(createHabitRepository(prisma), gamificationService);
 const goalService = createGoalService(createGoalRepository(prisma), statisticsService);
+const trackingService = createTrackingService(
+  createTrackingRepository(prisma), statisticsService, goalService, gamificationService,
+);
 const dashboardService = createDashboardService(createDashboardRepository(prisma), statisticsService, goalService);
 const app = createApp({
   healthService,
@@ -32,6 +39,7 @@ const app = createApp({
   statisticsService,
   goalService,
   dashboardService,
+  trackingService,
   cookieSecure: env.COOKIE_SECURE,
   frontendDirectory: fileURLToPath(new URL('../../frontend/dist/', import.meta.url)),
 });
