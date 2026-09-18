@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum HabitType {
+  BUILD
+  BREAK
+}
+
+enum HabitEventType {
+  COMPLETED
+  RELAPSED
+}
+
+enum GoalStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id                    String    @id @default(uuid()) @db.Char(36)
+  email                 String    @unique @db.VarChar(191)
+  passwordHash          String    @db.VarChar(255)
+  timezone              String    @db.VarChar(100)
+  onboardingCompletedAt DateTime? @db.DateTime(3)
+  createdAt             DateTime  @default(now()) @db.DateTime(3)
+  updatedAt             DateTime  @updatedAt @db.DateTime(3)
+  habits                Habit[]
+}
+
+model Habit {
+  id          String       @id @default(uuid()) @db.Char(36)
+  userId      String       @db.Char(36)
+  name        String       @db.VarChar(191)
+  description String?      @db.Text
+  type        HabitType
+  startDate   DateTime     @db.Date
+  createdAt   DateTime     @default(now()) @db.DateTime(3)
+  updatedAt   DateTime     @updatedAt @db.DateTime(3)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events      HabitEvent[]
+  goals       Goal[]
+
+  @@index([userId])
+}
+
+model HabitEvent {
+  id        String         @id @default(uuid()) @db.Char(36)
+  habitId   String         @db.Char(36)
+  type      HabitEventType
+  date      DateTime       @db.Date
+  note      String?        @db.Text
+  createdAt DateTime       @default(now()) @db.DateTime(3)
+  habit     Habit          @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  @@unique([habitId, date])
+}
+
+model Goal {
+  id               String     @id @default(uuid()) @db.Char(36)
+  habitId          String     @db.Char(36)
+  title            String     @db.VarChar(191)
+  targetStreakDays  Int
+  deadline         DateTime?  @db.Date
+  status           GoalStatus @default(ACTIVE)
+  completedDate    DateTime?  @db.Date
+  createdAt        DateTime   @default(now()) @db.DateTime(3)
+  updatedAt        DateTime   @updatedAt @db.DateTime(3)
+  habit            Habit      @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  @@index([habitId, status])
+}

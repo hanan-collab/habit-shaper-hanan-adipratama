@@ -1,0 +1,8 @@
+.shell {
+  max-width: 48rem;
+  margin: 12vh auto;
+  padding: 2rem;
+  font-family: system-ui, sans-serif;
+  line-height: 1.6;
+  color: #25332d;
+}
