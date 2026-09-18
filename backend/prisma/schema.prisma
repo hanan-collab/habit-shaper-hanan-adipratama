@@ -83,10 +83,12 @@ model Goal {
   targetStreakDays  Int
   deadline         DateTime?  @db.Date
   status           GoalStatus @default(ACTIVE)
+  activeSlot       Int?
   completedDate    DateTime?  @db.Date
   createdAt        DateTime   @default(now()) @db.DateTime(3)
   updatedAt        DateTime   @updatedAt @db.DateTime(3)
   habit            Habit      @relation(fields: [habitId], references: [id], onDelete: Cascade)
 
   @@index([habitId, status])
+  @@unique([habitId, activeSlot])
 }

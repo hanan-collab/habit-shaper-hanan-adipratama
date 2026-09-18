@@ -117,6 +117,29 @@ test('register, session authentication, onboarding, logout, and login work end t
     const buildStatistics = await call(`/api/habits/${buildHabit.id}/statistics`, { headers: { cookie: loginCookie } });
     assert.equal(buildStatistics.status, 200);
     assert.equal((await buildStatistics.json()).statistics.currentStreak, 0);
+    const createGoal = await call(`/api/habits/${buildHabit.id}/goals`, {
+      method: 'POST', headers: { cookie: loginCookie },
+      body: JSON.stringify({ title: 'Read for a week', targetStreakDays: 7 }),
+    });
+    assert.equal(createGoal.status, 201);
+    const goal = (await createGoal.json()).goal;
+    assert.equal(goal.status, 'ACTIVE');
+    assert.equal(goal.progress.remainingDays, 7);
+    const duplicateGoal = await call(`/api/habits/${buildHabit.id}/goals`, {
+      method: 'POST', headers: { cookie: loginCookie }, body: JSON.stringify({ title: 'Duplicate', targetStreakDays: 2 }),
+    });
+    assert.equal(duplicateGoal.status, 409);
+    const updateGoal = await call(`/api/goals/${goal.id}`, {
+      method: 'PATCH', headers: { cookie: loginCookie }, body: JSON.stringify({ title: 'Updated goal' }),
+    });
+    assert.equal(updateGoal.status, 200);
+    assert.equal((await updateGoal.json()).goal.title, 'Updated goal');
+    const cancelGoal = await call(`/api/goals/${goal.id}/cancel`, { method: 'POST', headers: { cookie: loginCookie } });
+    assert.equal(cancelGoal.status, 200);
+    assert.equal((await cancelGoal.json()).goal.status, 'CANCELLED');
+    const goals = await call('/api/goals', { headers: { cookie: loginCookie } });
+    assert.equal(goals.status, 200);
+    assert.equal((await goals.json()).goals.length, 1);
 
     const breakHabitResponse = await call('/api/habits', {
       method: 'POST', headers: { cookie: loginCookie },

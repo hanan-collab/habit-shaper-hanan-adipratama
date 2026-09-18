@@ -1,5 +1,3 @@
 # goals
 
-Future goal routes, controllers, services, and validation. Services must enforce ownership, positive streak targets, and at most one active goal per habit.
-
-Feature convention: route → controller → service → Prisma → MySQL. Add these files only when implementing the feature; no repository layer is planned for the MVP.
+Goal management uses streak statistics to calculate progress and completion. A nullable active slot plus a unique database index guarantees at most one active goal per habit, including concurrent requests.
