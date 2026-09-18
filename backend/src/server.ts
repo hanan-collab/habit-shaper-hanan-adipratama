@@ -1,10 +1,19 @@
 import { fileURLToPath } from 'node:url';
 import { createApp } from './app.js';
 import { env } from './config/env.js';
+import { createAuthRepository } from './features/auth/auth.repository.js';
+import { createAuthService } from './features/auth/auth.service.js';
 import { prisma } from './lib/prisma.js';
 
+const authRepository = createAuthRepository(prisma);
+const authService = createAuthService(authRepository, {
+  bcryptRounds: env.BCRYPT_ROUNDS,
+  sessionTtlDays: env.SESSION_TTL_DAYS,
+});
 const app = createApp({
   checkDatabase: () => prisma.$queryRaw`SELECT 1`,
+  authService,
+  cookieSecure: env.COOKIE_SECURE,
   frontendDirectory: fileURLToPath(new URL('../../frontend/dist/', import.meta.url)),
 });
 const server = app.listen(env.PORT, '0.0.0.0', () => console.log(`Habit Shaper listening on ${env.PORT}`));

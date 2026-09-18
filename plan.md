@@ -12,7 +12,7 @@
 - Register menggunakan email dan password.
 - Login dan logout.
 - Password disimpan sebagai hash.
-- JWT disimpan dalam HTTP-only cookie.
+- Token session acak disimpan dalam HTTP-only cookie; hash token dan masa berlaku disimpan di database.
 - Timezone dideteksi dari browser dan disimpan pada user.
 
 ### Onboarding
@@ -163,7 +163,7 @@ Required stack tetap dipenuhi secara langsung:
 | Database | MySQL 8 |
 | ORM and migrations | Prisma |
 | Validation | Zod |
-| Authentication | JWT HTTP-only cookie + bcrypt |
+| Authentication | Database session dengan HTTP-only cookie + bcrypt |
 | Frontend routing | React Router |
 | Server-state management | TanStack Query |
 | Forms | React Hook Form |

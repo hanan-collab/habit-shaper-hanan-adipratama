@@ -32,6 +32,20 @@ model User {
   createdAt             DateTime  @default(now()) @db.DateTime(3)
   updatedAt             DateTime  @updatedAt @db.DateTime(3)
   habits                Habit[]
+  sessions              Session[]
+}
+
+model Session {
+  id         String   @id @default(uuid()) @db.Char(36)
+  userId     String   @db.Char(36)
+  tokenHash  String   @unique @db.Char(64)
+  expiresAt  DateTime @db.DateTime(3)
+  createdAt  DateTime @default(now()) @db.DateTime(3)
+  lastUsedAt DateTime @default(now()) @db.DateTime(3)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model Habit {

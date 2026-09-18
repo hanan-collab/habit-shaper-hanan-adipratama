@@ -44,3 +44,62 @@ test('migration creates the domain tables and enforces one event per habit/date'
     }), (error) => error === rollback);
   } finally { await prisma.$disconnect(); }
 });
+
+test('register, session authentication, onboarding, logout, and login work end to end', async () => {
+  const prisma = new PrismaClient();
+  const email = `auth-smoke-${randomUUID()}@example.invalid`;
+  const call = (path, options = {}) => fetch(new URL(path, appUrl), {
+    signal: AbortSignal.timeout(15000),
+    ...options,
+    headers: { 'content-type': 'application/json', ...options.headers },
+  });
+  try {
+    const registration = await call('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password: 'correct horse battery staple', timezone: 'Asia/Jakarta' }),
+    });
+    assert.equal(registration.status, 201);
+    const registered = await registration.json();
+    assert.equal(registered.user.email, email);
+    assert.equal('passwordHash' in registered.user, false);
+    const registrationCookie = registration.headers.get('set-cookie');
+    assert.match(registrationCookie, /^habit_session=[^;]+;/);
+    assert.match(registrationCookie, /HttpOnly/i);
+    const cookie = registrationCookie.split(';', 1)[0];
+
+    const me = await call('/api/auth/me', { headers: { cookie } });
+    assert.equal(me.status, 200);
+    assert.equal((await me.json()).user.email, email);
+
+    const onboarding = await call('/api/auth/onboarding', {
+      method: 'PATCH', headers: { cookie }, body: JSON.stringify({ completed: true }),
+    });
+    assert.equal(onboarding.status, 200);
+    assert.ok((await onboarding.json()).user.onboardingCompletedAt);
+
+    const duplicate = await call('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ email, password: 'another valid password', timezone: 'Asia/Jakarta' }),
+    });
+    assert.equal(duplicate.status, 409);
+    assert.equal((await duplicate.json()).error.code, 'EMAIL_ALREADY_EXISTS');
+
+    const logout = await call('/api/auth/logout', { method: 'POST', headers: { cookie } });
+    assert.equal(logout.status, 204);
+    assert.equal((await call('/api/auth/me', { headers: { cookie } })).status, 401);
+
+    const login = await call('/api/auth/login', {
+      method: 'POST', body: JSON.stringify({ email, password: 'correct horse battery staple' }),
+    });
+    assert.equal(login.status, 200);
+    assert.match(login.headers.get('set-cookie'), /^habit_session=[^;]+;/);
+    const wrongPassword = await call('/api/auth/login', {
+      method: 'POST', body: JSON.stringify({ email, password: 'incorrect password' }),
+    });
+    assert.equal(wrongPassword.status, 401);
+    assert.equal((await wrongPassword.json()).error.code, 'INVALID_CREDENTIALS');
+  } finally {
+    await prisma.user.deleteMany({ where: { email } });
+    await prisma.$disconnect();
+  }
+});

@@ -1,6 +1,8 @@
 services:
   db:
     image: mysql:8.4
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE:-habit_shaper}
       MYSQL_USER: ${MYSQL_USER:-habit_shaper}
@@ -25,6 +27,9 @@ services:
     environment:
       PORT: "3000"
       DATABASE_URL: mysql://${MYSQL_USER:-habit_shaper}:${MYSQL_PASSWORD:-scaffold_password}@db:3306/${MYSQL_DATABASE:-habit_shaper}?connect_timeout=5&pool_timeout=5
+      BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-12}
+      SESSION_TTL_DAYS: ${SESSION_TTL_DAYS:-7}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
     depends_on:
       db:
         condition: service_healthy
