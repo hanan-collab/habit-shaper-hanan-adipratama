@@ -93,6 +93,41 @@ test('register, session authentication, onboarding, logout, and login work end t
     });
     assert.equal(login.status, 200);
     assert.match(login.headers.get('set-cookie'), /^habit_session=[^;]+;/);
+    const loginCookie = login.headers.get('set-cookie').split(';', 1)[0];
+
+    const buildHabitResponse = await call('/api/habits', {
+      method: 'POST', headers: { cookie: loginCookie },
+      body: JSON.stringify({ name: 'Read', description: 'Smoke habit', type: 'BUILD', startDate: '2026-09-01' }),
+    });
+    assert.equal(buildHabitResponse.status, 201);
+    const buildHabit = (await buildHabitResponse.json()).habit;
+    assert.equal(buildHabit.startDate, '2026-09-01');
+    const completion = await call(`/api/habits/${buildHabit.id}/completions/2026-09-18`, {
+      method: 'PUT', headers: { cookie: loginCookie }, body: JSON.stringify({ note: 'done' }),
+    });
+    assert.equal(completion.status, 200);
+    assert.equal((await completion.json()).event.type, 'COMPLETED');
+    const invalidRelapse = await call(`/api/habits/${buildHabit.id}/relapses/2026-09-18`, {
+      method: 'PUT', headers: { cookie: loginCookie }, body: '{}',
+    });
+    assert.equal(invalidRelapse.status, 409);
+    const detail = await call(`/api/habits/${buildHabit.id}`, { headers: { cookie: loginCookie } });
+    assert.equal(detail.status, 200);
+    assert.equal((await detail.json()).habit.events.length, 1);
+
+    const breakHabitResponse = await call('/api/habits', {
+      method: 'POST', headers: { cookie: loginCookie },
+      body: JSON.stringify({ name: 'No soda', type: 'BREAK', startDate: '2026-09-01' }),
+    });
+    assert.equal(breakHabitResponse.status, 201);
+    const breakHabit = (await breakHabitResponse.json()).habit;
+    assert.equal((await call(`/api/habits/${breakHabit.id}/relapses/2026-09-18`, {
+      method: 'PUT', headers: { cookie: loginCookie }, body: '{}',
+    })).status, 200);
+    const habits = await call('/api/habits', { headers: { cookie: loginCookie } });
+    assert.equal(habits.status, 200);
+    assert.equal((await habits.json()).habits.length, 2);
+
     const wrongPassword = await call('/api/auth/login', {
       method: 'POST', body: JSON.stringify({ email, password: 'incorrect password' }),
     });
