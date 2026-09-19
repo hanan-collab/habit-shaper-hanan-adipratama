@@ -100,13 +100,22 @@ test('register, session authentication, onboarding, logout, and login work end t
       body: JSON.stringify({ name: 'Read', description: 'Smoke habit', type: 'BUILD', startDate: '2026-09-01' }),
     });
     assert.equal(buildHabitResponse.status, 201);
-    const buildHabit = (await buildHabitResponse.json()).habit;
+    const buildHabitBody = await buildHabitResponse.json();
+    const buildHabit = buildHabitBody.habit;
     assert.equal(buildHabit.startDate, '2026-09-01');
+    assert.deepEqual(buildHabitBody.meta.gamificationEvents.map(({ type }) => type), ['HABIT_CREATED']);
     const completion = await call(`/api/habits/${buildHabit.id}/completions/2026-09-18`, {
       method: 'PUT', headers: { cookie: loginCookie }, body: JSON.stringify({ note: 'done' }),
     });
     assert.equal(completion.status, 200);
-    assert.equal((await completion.json()).event.type, 'COMPLETED');
+    const completionBody = await completion.json();
+    assert.equal(completionBody.data.event.type, 'COMPLETED');
+    assert.ok(completionBody.meta.gamificationEvents.some(({ type }) => type === 'FIRST_CHECK_IN'));
+    const completionRetry = await call(`/api/habits/${buildHabit.id}/completions/2026-09-18`, {
+      method: 'PUT', headers: { cookie: loginCookie }, body: JSON.stringify({ note: 'done' }),
+    });
+    assert.equal(completionRetry.status, 200);
+    assert.deepEqual((await completionRetry.json()).meta.gamificationEvents, []);
     const invalidRelapse = await call(`/api/habits/${buildHabit.id}/relapses/2026-09-18`, {
       method: 'PUT', headers: { cookie: loginCookie }, body: '{}',
     });
@@ -116,7 +125,7 @@ test('register, session authentication, onboarding, logout, and login work end t
     assert.equal((await detail.json()).habit.events.length, 1);
     const buildStatistics = await call(`/api/habits/${buildHabit.id}/statistics`, { headers: { cookie: loginCookie } });
     assert.equal(buildStatistics.status, 200);
-    assert.equal((await buildStatistics.json()).statistics.currentStreak, 0);
+    assert.equal((await buildStatistics.json()).statistics.currentStreak, 1);
     const createGoal = await call(`/api/habits/${buildHabit.id}/goals`, {
       method: 'POST', headers: { cookie: loginCookie },
       body: JSON.stringify({ title: 'Read for a week', targetStreakDays: 7 }),
@@ -124,7 +133,7 @@ test('register, session authentication, onboarding, logout, and login work end t
     assert.equal(createGoal.status, 201);
     const goal = (await createGoal.json()).goal;
     assert.equal(goal.status, 'ACTIVE');
-    assert.equal(goal.progress.remainingDays, 7);
+    assert.equal(goal.progress.remainingDays, 6);
     const duplicateGoal = await call(`/api/habits/${buildHabit.id}/goals`, {
       method: 'POST', headers: { cookie: loginCookie }, body: JSON.stringify({ title: 'Duplicate', targetStreakDays: 2 }),
     });
@@ -147,9 +156,11 @@ test('register, session authentication, onboarding, logout, and login work end t
     });
     assert.equal(breakHabitResponse.status, 201);
     const breakHabit = (await breakHabitResponse.json()).habit;
-    assert.equal((await call(`/api/habits/${breakHabit.id}/relapses/2026-09-18`, {
+    const relapseResponse = await call(`/api/habits/${breakHabit.id}/relapses/2026-09-18`, {
       method: 'PUT', headers: { cookie: loginCookie }, body: '{}',
-    })).status, 200);
+    });
+    assert.equal(relapseResponse.status, 200);
+    assert.deepEqual((await relapseResponse.json()).meta.gamificationEvents.map(({ type }) => type), ['RELAPSE_RECORDED']);
     const breakStatistics = await call(`/api/habits/${breakHabit.id}/statistics`, { headers: { cookie: loginCookie } });
     assert.equal(breakStatistics.status, 200);
     assert.equal((await breakStatistics.json()).statistics.lastRelapse, '2026-09-18');
@@ -161,6 +172,8 @@ test('register, session authentication, onboarding, logout, and login work end t
     const dashboardBody = (await dashboard.json()).dashboard;
     assert.deepEqual(dashboardBody.summary, { activeHabits: 2, activeGoals: 0 });
     assert.equal(dashboardBody.habits.length, 2);
+    assert.equal(dashboardBody.userStatistics.totalBuildCompletions, 1);
+    assert.equal(dashboardBody.userStatistics.totalGoalsCompleted, 0);
 
     const wrongPassword = await call('/api/auth/login', {
       method: 'POST', body: JSON.stringify({ email, password: 'incorrect password' }),

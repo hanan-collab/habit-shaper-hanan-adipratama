@@ -57,6 +57,28 @@ describe('tracking service', () => {
     expect(result.meta.gamificationEvents).toEqual([]);
   });
 
+  test('synchronizes an active goal and emits goal completion first', async () => {
+    const activeGoal: Goal = {
+      id: 'goal-1', habitId: source.id, title: 'One day', targetStreakDays: 1,
+      deadline: null, status: 'ACTIVE', activeSlot: 1, completedDate: null,
+      createdAt: new Date(), updatedAt: new Date(),
+    };
+    source.goals = [activeGoal];
+    goalService.gamificationState = vi.fn(() => ({
+      id: activeGoal.id, status: 'ACTIVE' as const, currentProgress: 0,
+      targetStreakDays: 1, percentage: 0, remainingDays: 1,
+    }));
+    goalService.syncAfterStreakChange = vi.fn(async () => ({
+      id: activeGoal.id, status: 'COMPLETED' as const, currentProgress: 1,
+      targetStreakDays: 1, percentage: 100, remainingDays: 0,
+    }));
+    const result = await service().put('user-1', 'UTC', source.id, today, TrackingEventKind.Completed, {});
+    expect(result.data.goal?.status).toBe('COMPLETED');
+    expect(result.meta.gamificationEvents[0]).toMatchObject({
+      type: 'GOAL_COMPLETED', level: 'MILESTONE', goalId: activeGoal.id, target: 1,
+    });
+  });
+
   test('returns only a recovery event for a BREAK relapse', async () => {
     source = { ...habit('BREAK'), events: [], goals: [] };
     repository.putEvent = vi.fn(async () => ({ event: event('RELAPSED'), created: true }));

@@ -95,7 +95,7 @@ For local backend development, set `DATABASE_URL` in your shell to the Compose d
 - Frontend: `src/app` contains the shell; `src/features` reserves landing, auth, onboarding, dashboard, habits, and goals. Shared components, libraries, styles, and types have dedicated directories. React Router, TanStack Query, React Hook Form, and Zod are installed for future features.
 - Backend: each feature uses `route → controller → service → repository → Prisma → MySQL`, with dedicated DTO, model, and enum modules. Routes own URLs/middleware, controllers own HTTP mapping, services enforce business rules, and repositories isolate database queries.
 - Database: `User`, `Session`, `Habit`, `HabitEvent`, and `Goal`, UUID IDs, enum fields, foreign keys with dependent-row cascade deletion, unique email, unique session-token hash, and unique habit/date events. Calendar dates use MySQL `DATE`; audit timestamps use `DATETIME(3)`. Optional fields are nullable and goals default to `ACTIVE`.
-- Runtime: the backend implements health, authentication/onboarding, habit/event management, streak statistics, goals, and dashboard aggregation. Unknown API paths return JSON `404`; browser page routes serve the React shell.
+- Runtime: the backend implements health, authentication/onboarding, habit management, tracking, streak statistics, goals, stateless gamification events, derived user statistics, and dashboard aggregation. Unknown API paths return JSON `404`; browser page routes serve the React shell.
 
 Frontend product screens and protected frontend routing remain unimplemented.
 
@@ -146,11 +146,24 @@ POST   /api/goals/:goalId/cancel
 GET    /api/dashboard
 ```
 
+Creating a habit returns `meta.gamificationEvents` with `HABIT_CREATED`. Completion and relapse PUT responses use this shape:
+
+```json
+{
+  "data": { "event": {}, "stats": {}, "goal": null },
+  "meta": { "gamificationEvents": [] }
+}
+```
+
+Gamification events contain only semantic `type`, `level`, identifiers, and numeric context. UI copy and animation remain frontend concerns. Repeating an existing PUT updates its optional note and returns an empty event list. Deleting or correcting a tracking record does not emit a celebration.
+
+Dashboard responses include derived `userStatistics`: `totalBuildCompletions`, `totalGoalsCompleted`, `bestBuildStreak`, `bestBreakStreak`, and `bestOverallStreak`. These values are calculated from current habit events and goals and are not persisted.
+
 Dates use `YYYY-MM-DD`. Habit start dates and events cannot be in the future in the user's stored timezone. BUILD habits accept only completion events; BREAK habits accept only relapse events. PUT event operations are idempotent, and all resource lookup is scoped to the authenticated user.
 
 ## Streak behavior
 
-BUILD current streak counts consecutive completion events ending today. BREAK current streak counts clean days since the most recent relapse, with a relapse today producing a streak of zero. Weekly statistics cover Monday through today in the user's timezone and begin no earlier than the habit start date. Calculated statistics and goal progress are not stored as columns.
+BUILD current streak counts consecutive completion events ending today or yesterday when today is still open. BREAK current streak counts clean days since the most recent relapse, with a relapse today producing a streak of zero. Weekly statistics cover Monday through today in the user's timezone and begin no earlier than the habit start date. Statistics include completion totals, eligible weekly days, missed days, completion rate, and last relapse date. Calculated statistics, user statistics, gamification state, and goal progress are not stored as columns.
 
 Goals require a positive streak target. MySQL enforces at most one active goal per habit with a unique active slot. Reaching the target completes the goal when goals or dashboard data are read; cancelling/completing releases the slot. Deadlines cannot be created or changed to a past date, and overdue state is calculated for active goals.
 
