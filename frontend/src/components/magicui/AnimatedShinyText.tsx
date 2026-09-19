@@ -1,0 +1,1 @@
+import type{PropsWithChildren}from'react';import styles from'./Magic.module.css';export function AnimatedShinyText({children,className=''}:PropsWithChildren<{className?:string}>){return <span className={`${styles.shiny} ${className}`}>{children}</span>}
