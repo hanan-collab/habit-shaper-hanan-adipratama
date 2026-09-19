@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
 import { AppShell } from '../components/layout/AppShell';
 import { useSession } from '../features/auth/auth.queries';
+import { LandingPage } from '../features/landing/LandingPage';
 
 function Placeholder({ title }: { title: string }) { return <section className="pageWidth"><p className="eyebrow">Habit Shaper</p><h1>{title}</h1><p>This page is being shaped.</p></section>; }
 function ProtectedShell() {
@@ -12,7 +13,7 @@ function ProtectedShell() {
 }
 
 export function App() { return <BrowserRouter><Routes>
-  <Route path="/" element={<Placeholder title="Build what helps." />} />
+  <Route path="/" element={<LandingPage />} />
   <Route path="/login" element={<Placeholder title="Welcome back." />} />
   <Route path="/register" element={<Placeholder title="Start with one habit." />} />
   <Route path="/onboarding" element={<Placeholder title="Start with one thing." />} />

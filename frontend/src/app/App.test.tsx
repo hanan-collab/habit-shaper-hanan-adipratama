@@ -5,5 +5,6 @@ import { AppProviders } from './providers';
 
 test('renders the public route through the application router', () => {
   render(<AppProviders><App /></AppProviders>);
-  expect(screen.getByRole('heading',{name:'Build what helps.'})).toBeInTheDocument();
+  expect(screen.getByRole('heading',{name:/Build what helps/i})).toBeInTheDocument();
+  expect(screen.getByRole('button',{name:'Complete today'})).toBeInTheDocument();
 });

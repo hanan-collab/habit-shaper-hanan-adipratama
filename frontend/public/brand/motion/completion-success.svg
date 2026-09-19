@@ -1,1 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120"><style>.s{stroke-dasharray:120;stroke-dashoffset:120;animation:d .65s ease forwards}.c{opacity:0;animation:o .2s .45s forwards}@keyframes d{to{stroke-dashoffset:0}}@keyframes o{to{opacity:1}}@media(prefers-reduced-motion:reduce){.s{stroke-dashoffset:0;animation:none}.c{opacity:1;animation:none}}</style><rect x="24" y="18" width="112" height="84" rx="22" fill="#fff" stroke="#DFB7B3" stroke-width="3"/><path class="s" d="M43 77h26V61h25V45h24" fill="none" stroke="#A93F3B" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path class="c" d="m102 72 8 8 15-18" fill="none" stroke="#261F1F" stroke-width="5" stroke-linecap="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-labelledby="title desc">
+  <title id="title">Habit completion response</title>
+  <desc id="desc">A raised step tile presses, rises, lights up, and reveals a check.</desc>
+  <style>
+    .tile{transform-origin:90px 88px;animation:press .62s cubic-bezier(.2,.8,.2,1) both}
+    .step{opacity:.15;animation:light .2s ease-out forwards}.s2{animation-delay:.16s}.s3{animation-delay:.3s}
+    .check{stroke-dasharray:48;stroke-dashoffset:48;animation:draw .28s .44s ease-out forwards}
+    @keyframes press{35%{transform:translateY(7px)}100%{transform:translateY(0)}}
+    @keyframes light{to{opacity:1}}@keyframes draw{to{stroke-dashoffset:0}}
+    @media(prefers-reduced-motion:reduce){.tile,.step,.check{animation:none;opacity:1;transform:none;stroke-dashoffset:0}}
+  </style>
+  <g class="tile">
+    <rect x="30" y="39" width="120" height="120" rx="30" fill="#7F2F2C"/>
+    <rect x="30" y="27" width="120" height="120" rx="30" fill="#FFFFFF" stroke="#E67A72" stroke-width="5"/>
+    <path class="step s1" d="M54 104h25" fill="none" stroke="#A93F3B" stroke-width="10" stroke-linecap="round"/>
+    <path class="step s2" d="M54 82h48" fill="none" stroke="#A93F3B" stroke-width="10" stroke-linecap="round"/>
+    <path class="step s3" d="M54 60h70" fill="none" stroke="#A93F3B" stroke-width="10" stroke-linecap="round"/>
+    <path class="check" d="m103 114 10 10 22-25" fill="none" stroke="#261F1F" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
