@@ -19,7 +19,7 @@ test('production server serves health, React assets, and page fallback', async (
   assert.ok(script, 'production HTML references a JavaScript bundle');
   const bundle = await get(script[1]);
   assert.equal(bundle.status, 200);
-  assert.match(await bundle.text(), /Habit Shaper scaffold/);
+  assert.match(await bundle.text(), /Small actions \/ visible progress/);
   const page = await get('/app/habits');
   assert.equal(page.status, 200);
   assert.equal(await page.text(), html);

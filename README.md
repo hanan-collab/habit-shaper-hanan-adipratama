@@ -1,6 +1,6 @@
 # Habit Shaper
 
-Runnable infrastructure scaffold for [plan.md](plan.md). React + Vite + TypeScript live in `frontend/`; Express + TypeScript + Prisma live in `backend/`. MySQL 8.4 supplies the database. Express serves the React production build and `/api` on one origin; no Nginx or CORS configuration is needed.
+Full-stack implementation of [plan.md](plan.md) and the Monument design handoff. React + Vite + TypeScript live in `frontend/`; Express + TypeScript + Prisma live in `backend/`. MySQL 8.4 supplies the database. Express serves the React production build and `/api` on one origin; no Nginx or CORS configuration is needed.
 
 ## Start with Docker
 
@@ -92,12 +92,12 @@ For local backend development, set `DATABASE_URL` in your shell to the Compose d
 
 ## Structure and implementation boundary
 
-- Frontend: `src/app` contains the shell; `src/features` reserves landing, auth, onboarding, dashboard, habits, and goals. Shared components, libraries, styles, and types have dedicated directories. React Router, TanStack Query, React Hook Form, and Zod are installed for future features.
+- Frontend: feature pages cover landing, authentication, onboarding, dashboard, habits, goals, statistics, settings, gamification responses, and the public Brand Kit. React Router owns route boundaries, TanStack Query owns server state, React Hook Form and Zod own form validation, and CSS Modules implement the responsive Monument design system.
 - Backend: each feature uses `route → controller → service → repository → Prisma → MySQL`, with dedicated DTO, model, and enum modules. Routes own URLs/middleware, controllers own HTTP mapping, services enforce business rules, and repositories isolate database queries.
 - Database: `User`, `Session`, `Habit`, `HabitEvent`, and `Goal`, UUID IDs, enum fields, foreign keys with dependent-row cascade deletion, unique email, unique session-token hash, and unique habit/date events. Calendar dates use MySQL `DATE`; audit timestamps use `DATETIME(3)`. Optional fields are nullable and goals default to `ACTIVE`.
 - Runtime: the backend implements health, authentication/onboarding, habit management, tracking, streak statistics, goals, stateless gamification events, derived user statistics, and dashboard aggregation. Unknown API paths return JSON `404`; browser page routes serve the React shell.
 
-Frontend product screens and protected frontend routing remain unimplemented.
+Protected `/app/*` routes require a valid database session and completed onboarding. The public homepage, authentication, onboarding, and `/brand-kit` routes remain accessible outside the product shell.
 
 ## Authentication API
 

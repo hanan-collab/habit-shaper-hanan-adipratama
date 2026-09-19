@@ -15,7 +15,6 @@ import { StatisticsPage } from '../features/statistics/StatisticsPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
 import { BrandKitPage } from '../features/brand-kit/BrandKitPage';
 
-function Placeholder({ title }: { title: string }) { return <section className="pageWidth"><p className="eyebrow">Habit Shaper</p><h1>{title}</h1><p>This page is being shaped.</p></section>; }
 function ProtectedShell() {
   const session = useSession();
   if (session.isLoading) return <div className="pageWidth" style={{paddingTop:80}}><div className="skeleton" /></div>;
