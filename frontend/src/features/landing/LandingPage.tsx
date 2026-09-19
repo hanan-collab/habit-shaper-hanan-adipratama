@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, Check, RotateCcw, Sparkles, Target } from 'lucide-react';
 import { Link } from 'react-router';
+import { Particles } from '../../components/magicui';
 import { UserAvatar } from '../../components/ui/UserAvatar';
 import { localDate } from '../../lib/api';
 import { useSession } from '../auth/auth.queries';
@@ -97,12 +98,13 @@ type ProductPreviewProps = {
   habitName: string;
   momentum: number;
   pending: boolean;
+  burstKey: number;
   streak: number;
   weekCompleted: number;
   onToggle: () => void;
 };
 
-function ProductPreview({ avatarSeed, dateLabel, done, habitName, momentum, pending, streak, weekCompleted, onToggle }: ProductPreviewProps) {
+function ProductPreview({ avatarSeed, dateLabel, done, habitName, momentum, pending, burstKey, streak, weekCompleted, onToggle }: ProductPreviewProps) {
   const completedDays = Math.min(7, Math.max(0, weekCompleted));
   return (
     <div className={styles.productStage}>
@@ -134,6 +136,7 @@ function ProductPreview({ avatarSeed, dateLabel, done, habitName, momentum, pend
         </div>
 
         <div className={styles.habitCard}>
+          {burstKey > 0 && <Particles burstKey={burstKey} />}
           <div className={styles.habitTopline}>
             <span className={styles.habitIcon}><img src="/brand/motion/flame-active.svg" alt="" /></span>
             <span><small>BUILD</small><b>{habitName}</b></span>
@@ -165,6 +168,7 @@ export function LandingPage() {
   const session = useSession();
   const user = session.data?.user;
   const [demoDone, setDemoDone] = useState(false);
+  const [burstKey, setBurstKey] = useState(0);
   const dashboard = useQuery({
     queryKey: ['dashboard'],
     queryFn: dashboardApi.get,
@@ -181,7 +185,13 @@ export function LandingPage() {
         ? habitsApi.removeCompletion(liveHabit.id, date)
         : habitsApi.complete(liveHabit.id, date);
     },
-    onSuccess: () => cache.invalidateQueries({ queryKey: ['dashboard'] }),
+    onSuccess: () => {
+      if (!liveDone) {
+        setBurstKey((current) => current + 1);
+        window.setTimeout(() => setBurstKey(0), 900);
+      }
+      void cache.invalidateQueries({ queryKey: ['dashboard'] });
+    },
   });
   const done = liveHabit ? liveDone : demoDone;
   const streak = liveHabit?.statistics.currentStreak ?? (demoDone ? 18 : 17);
@@ -194,7 +204,13 @@ export function LandingPage() {
     : '/register';
   const toggleCompletion = () => {
     if (liveHabit) completion.mutate();
-    else setDemoDone((value) => !value);
+    else {
+      if (!demoDone) {
+        setBurstKey((current) => current + 1);
+        window.setTimeout(() => setBurstKey(0), 900);
+      }
+      setDemoDone((value) => !value);
+    }
   };
 
   return (
@@ -224,7 +240,7 @@ export function LandingPage() {
           </p>
           <div className={styles.heroActions}>
             <a className={styles.raisedButton} href="#start">START WITH ONE HABIT <ArrowRight size={18} /></a>
-            <span>No perfect streaks required.</span>
+            <a className={styles.methodLink} href="#method">See the method</a>
           </div>
         </div>
         <ProductPreview
@@ -234,6 +250,7 @@ export function LandingPage() {
           habitName={liveHabit?.name ?? 'Read for 20 minutes'}
           momentum={momentum}
           pending={completion.isPending}
+          burstKey={burstKey}
           streak={streak}
           weekCompleted={liveHabit?.statistics.completedThisWeek ?? (demoDone ? 7 : 6)}
           onToggle={toggleCompletion}

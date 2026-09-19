@@ -40,7 +40,7 @@
 .rotatingWord span.isActive { opacity: 1; transform: translateY(0); }
 .heroCopy > p { max-width: 570px; font-size: 18px; line-height: 1.7; color: #655858; }
 .heroActions { margin-top: 34px; display: flex; align-items: center; gap: 23px; }
-.heroActions > span { font-size: 13px; color: #776969; }
+.methodLink { color: var(--deep-red) !important; font-size: 13px; font-weight: 700; }
 .raisedButton {
   display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 52px; padding: 0 22px;
   border: 1px solid var(--deep-red-dark); border-radius: 12px; background: var(--deep-red); color: var(--white);
@@ -72,7 +72,7 @@
 .weekDots { display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px; margin-top: 17px; }
 .weekDots i { display: grid; place-items: center; height: 25px; border-radius: 7px; background: #f5e9e7; color: #9a8583; font-style: normal; font-size: 9px; }
 .weekDots i.isDone { background: var(--deep-red); color: white; }
-.habitCard { padding: 19px; border: 1px solid var(--border); border-radius: 18px; box-shadow: 0 6px 0 rgba(169,63,59,.14); background: var(--white); }
+.habitCard { position: relative; isolation: isolate; padding: 19px; border: 1px solid var(--border); border-radius: 18px; box-shadow: 0 6px 0 rgba(169,63,59,.14); background: var(--white); }
 .habitTopline { gap: 12px; }
 .habitIcon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 11px; background: var(--blush); color: var(--deep-red); }
 .habitIcon img { width: 31px; height: 31px; }
