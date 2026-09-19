@@ -11,6 +11,7 @@ import { HabitDetailPage } from '../features/habits/HabitDetailPage';
 import { GoalsPage } from '../features/goals/GoalsPage';
 import { GoalFormPage } from '../features/goals/GoalFormPage';
 import { GoalDetailPage } from '../features/goals/GoalDetailPage';
+import { StatisticsPage } from '../features/statistics/StatisticsPage';
 
 function Placeholder({ title }: { title: string }) { return <section className="pageWidth"><p className="eyebrow">Habit Shaper</p><h1>{title}</h1><p>This page is being shaped.</p></section>; }
 function ProtectedShell() {
@@ -37,7 +38,7 @@ export function App() { return <BrowserRouter><Routes>
     <Route path="goals/new" element={<GoalFormPage />} />
     <Route path="goals/:goalId" element={<GoalDetailPage />} />
     <Route path="goals/:goalId/edit" element={<GoalFormPage />} />
-    <Route path="statistics" element={<Placeholder title="Your pattern." />} />
+    <Route path="statistics" element={<StatisticsPage />} />
     <Route path="settings" element={<Placeholder title="Settings." />} />
   </Route>
   <Route path="*" element={<Navigate to="/" replace />} />
