@@ -3,6 +3,7 @@ import { AppShell } from '../components/layout/AppShell';
 import { useSession } from '../features/auth/auth.queries';
 import { LandingPage } from '../features/landing/LandingPage';
 import { AuthPage } from '../features/auth/AuthPage';
+import { OnboardingPage } from '../features/onboarding/OnboardingPage';
 
 function Placeholder({ title }: { title: string }) { return <section className="pageWidth"><p className="eyebrow">Habit Shaper</p><h1>{title}</h1><p>This page is being shaped.</p></section>; }
 function ProtectedShell() {
@@ -17,7 +18,7 @@ export function App() { return <BrowserRouter><Routes>
   <Route path="/" element={<LandingPage />} />
   <Route path="/login" element={<AuthPage mode="login" />} />
   <Route path="/register" element={<AuthPage mode="register" />} />
-  <Route path="/onboarding" element={<Placeholder title="Start with one thing." />} />
+  <Route path="/onboarding" element={<OnboardingPage />} />
   <Route path="/brand-kit" element={<Placeholder title="The Monument system." />} />
   <Route path="/app" element={<ProtectedShell />}>
     <Route index element={<Placeholder title="Today." />} />
