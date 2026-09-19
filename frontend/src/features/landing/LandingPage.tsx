@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, Check, RotateCcw, Sparkles, Target } from 'lucide-react';
 import { Link } from 'react-router';
+import { UserAvatar } from '../../components/ui/UserAvatar';
+import { localDate } from '../../lib/api';
+import { useSession } from '../auth/auth.queries';
+import { dashboardApi } from '../dashboard/dashboard.api';
+import { habitsApi } from '../habits/habits.api';
 import styles from './LandingPage.module.css';
 
 const activity = [
@@ -84,9 +90,20 @@ function AnimatedActivityList() {
   );
 }
 
-function ProductPreview() {
-  const [done, setDone] = useState(false);
+type ProductPreviewProps = {
+  avatarSeed?: string;
+  dateLabel: string;
+  done: boolean;
+  habitName: string;
+  momentum: number;
+  pending: boolean;
+  streak: number;
+  weekCompleted: number;
+  onToggle: () => void;
+};
 
+function ProductPreview({ avatarSeed, dateLabel, done, habitName, momentum, pending, streak, weekCompleted, onToggle }: ProductPreviewProps) {
+  const completedDays = Math.min(7, Math.max(0, weekCompleted));
   return (
     <div className={styles.productStage}>
       <div className={styles.productGlow} />
@@ -94,21 +111,23 @@ function ProductPreview() {
         <div className={styles.productBar}>
           <div className={styles.productUser}>
             <StepMark compact />
-            <span><b>Today</b><small>Tuesday, 18 Sep</small></span>
+            <span><b>Today</b><small>{dateLabel}</small></span>
           </div>
-          <button className={styles.avatar} type="button" aria-label="Open profile">AV</button>
+          {avatarSeed
+            ? <Link className={styles.avatarLink} to="/app/settings"><UserAvatar seed={avatarSeed} /></Link>
+            : <Link className={styles.avatar} to="/login" aria-label="Log in">AV</Link>}
         </div>
 
         <div className={styles.productSummary}>
           <span className={styles.summaryKicker}>YOUR MOMENTUM</span>
           <div className={styles.summaryLine}>
-            <strong className={done ? styles.numberPop : undefined}>{done ? '13' : '12'}</strong>
+            <strong className={done ? styles.numberPop : undefined}>{momentum}</strong>
             <span>DAYS<br />MOVING.</span>
           </div>
-          <div className={styles.weekDots} aria-label={done ? 'Seven of seven days completed' : 'Six of seven days completed'}>
+          <div className={styles.weekDots} aria-label={`${completedDays} of seven days completed`}>
             {[0, 1, 2, 3, 4, 5, 6].map((day) => (
-              <i className={day < (done ? 7 : 6) ? styles.isDone : undefined} key={day}>
-                {day < (done ? 7 : 6) ? <Check size={11} /> : 'T'}
+              <i className={day < completedDays ? styles.isDone : undefined} key={day}>
+                {day < completedDays ? <Check size={11} /> : 'T'}
               </i>
             ))}
           </div>
@@ -117,15 +136,16 @@ function ProductPreview() {
         <div className={styles.habitCard}>
           <div className={styles.habitTopline}>
             <span className={styles.habitIcon}><img src="/brand/motion/flame-active.svg" alt="" /></span>
-            <span><small>BUILD</small><b>Read for 20 minutes</b></span>
-            <strong>{done ? '18' : '17'}<small>DAY STREAK</small></strong>
+            <span><small>BUILD</small><b>{habitName}</b></span>
+            <strong>{streak}<small>DAY STREAK</small></strong>
           </div>
           <button
             className={done ? `${styles.completeButton} ${styles.isComplete}` : styles.completeButton}
             type="button"
-            onClick={() => setDone((value) => !value)}
+            disabled={pending}
+            onClick={onToggle}
           >
-            <span>{done ? <Check size={18} /> : null}{done ? 'COMPLETED' : 'COMPLETE TODAY'}</span>
+            <span>{done ? <Check size={18} /> : null}{pending ? 'SAVING…' : done ? 'COMPLETED' : 'COMPLETE TODAY'}</span>
           </button>
         </div>
 
@@ -141,6 +161,42 @@ function ProductPreview() {
 }
 
 export function LandingPage() {
+  const cache = useQueryClient();
+  const session = useSession();
+  const user = session.data?.user;
+  const [demoDone, setDemoDone] = useState(false);
+  const dashboard = useQuery({
+    queryKey: ['dashboard'],
+    queryFn: dashboardApi.get,
+    enabled: Boolean(user?.onboardingCompletedAt),
+  });
+  const liveDashboard = dashboard.data?.dashboard;
+  const liveHabit = liveDashboard?.habits.find((habit) => habit.type === 'BUILD');
+  const liveDone = liveHabit?.todayStatus === 'COMPLETED';
+  const completion = useMutation({
+    mutationFn: () => {
+      if (!liveHabit) return Promise.resolve();
+      const date = liveDashboard?.date ?? localDate(user?.timezone);
+      return liveDone
+        ? habitsApi.removeCompletion(liveHabit.id, date)
+        : habitsApi.complete(liveHabit.id, date);
+    },
+    onSuccess: () => cache.invalidateQueries({ queryKey: ['dashboard'] }),
+  });
+  const done = liveHabit ? liveDone : demoDone;
+  const streak = liveHabit?.statistics.currentStreak ?? (demoDone ? 18 : 17);
+  const momentum = liveDashboard?.userStatistics.bestOverallStreak ?? (demoDone ? 13 : 12);
+  const dateLabel = liveDashboard?.date
+    ? new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeZone: user?.timezone }).format(new Date(`${liveDashboard.date}T12:00:00`))
+    : 'Tuesday, 18 Sep';
+  const appDestination = user
+    ? (user.onboardingCompletedAt ? '/app' : '/onboarding')
+    : '/register';
+  const toggleCompletion = () => {
+    if (liveHabit) completion.mutate();
+    else setDemoDone((value) => !value);
+  };
+
   return (
     <main className={styles.page}>
       <nav className={styles.siteNav} aria-label="Main navigation">
@@ -171,7 +227,17 @@ export function LandingPage() {
             <span>No perfect streaks required.</span>
           </div>
         </div>
-        <ProductPreview />
+        <ProductPreview
+          avatarSeed={user?.id || user?.email}
+          dateLabel={dateLabel}
+          done={done}
+          habitName={liveHabit?.name ?? 'Read for 20 minutes'}
+          momentum={momentum}
+          pending={completion.isPending}
+          streak={streak}
+          weekCompleted={liveHabit?.statistics.completedThisWeek ?? (demoDone ? 7 : 6)}
+          onToggle={toggleCompletion}
+        />
       </section>
 
       <section className={styles.momentumBand} aria-label="Habit Shaper promise">
@@ -237,7 +303,9 @@ export function LandingPage() {
           <span>ONE SMALL ACTION.</span>
           <h2>START SHAPING.</h2>
         </div>
-        <Link className={styles.raisedButton} to="/register">CREATE YOUR FIRST HABIT <ArrowRight size={18} /></Link>
+        <Link className={styles.raisedButton} to={appDestination}>
+          {user ? 'OPEN TODAY' : 'CREATE YOUR FIRST HABIT'} <ArrowRight size={18} />
+        </Link>
       </section>
 
       <footer className={styles.siteFooter}>

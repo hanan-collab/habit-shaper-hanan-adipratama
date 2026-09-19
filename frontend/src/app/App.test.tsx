@@ -12,5 +12,5 @@ test('renders the public route through the application router', () => {
   const completeButton = screen.getByRole('button',{name:'COMPLETE TODAY'});
   fireEvent.click(completeButton);
   expect(screen.getByRole('button',{name:'COMPLETED'})).toBeInTheDocument();
-  expect(screen.getByLabelText('Seven of seven days completed')).toBeInTheDocument();
+  expect(screen.getByLabelText('7 of seven days completed')).toBeInTheDocument();
 });

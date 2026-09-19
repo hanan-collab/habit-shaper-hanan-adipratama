@@ -61,7 +61,8 @@
 .productUser span { display: flex; flex-direction: column; }
 .productUser b { font-size: 15px; }
 .productUser small { font-size: 11px; color: #8a7775; }
-.avatar { width: 39px; height: 39px; border: 1px solid var(--border); border-radius: 50%; color: var(--deep-red); background: var(--blush); font-size: 12px; font-weight: 700; }
+.avatar { display: grid; place-items: center; width: 39px; height: 39px; border: 1px solid var(--border); border-radius: 50%; color: var(--deep-red); background: var(--blush); font-size: 12px; font-weight: 700; }
+.avatarLink { display: inline-flex; border-radius: 11px; }
 .productSummary { padding: 23px 0 19px; }
 .summaryKicker { font-size: 10px; font-weight: 700; letter-spacing: .15em; color: var(--deep-red); }
 .summaryLine { gap: 14px; margin-top: 5px; }
