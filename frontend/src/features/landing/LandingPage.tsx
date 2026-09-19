@@ -304,7 +304,7 @@ export function LandingPage() {
           <h2>START SHAPING.</h2>
         </div>
         <Link className={styles.raisedButton} to={appDestination}>
-          {user ? 'OPEN TODAY' : 'CREATE YOUR FIRST HABIT'} <ArrowRight size={18} />
+          CREATE YOUR FIRST HABIT <ArrowRight size={18} />
         </Link>
       </section>
 
