@@ -13,6 +13,7 @@ import { GoalFormPage } from '../features/goals/GoalFormPage';
 import { GoalDetailPage } from '../features/goals/GoalDetailPage';
 import { StatisticsPage } from '../features/statistics/StatisticsPage';
 import { SettingsPage } from '../features/settings/SettingsPage';
+import { BrandKitPage } from '../features/brand-kit/BrandKitPage';
 
 function Placeholder({ title }: { title: string }) { return <section className="pageWidth"><p className="eyebrow">Habit Shaper</p><h1>{title}</h1><p>This page is being shaped.</p></section>; }
 function ProtectedShell() {
@@ -28,7 +29,7 @@ export function App() { return <BrowserRouter><Routes>
   <Route path="/login" element={<AuthPage mode="login" />} />
   <Route path="/register" element={<AuthPage mode="register" />} />
   <Route path="/onboarding" element={<OnboardingPage />} />
-  <Route path="/brand-kit" element={<Placeholder title="The Monument system." />} />
+  <Route path="/brand-kit" element={<BrandKitPage />} />
   <Route path="/app" element={<ProtectedShell />}>
     <Route index element={<DashboardPage />} />
     <Route path="habits" element={<HabitsPage />} />
