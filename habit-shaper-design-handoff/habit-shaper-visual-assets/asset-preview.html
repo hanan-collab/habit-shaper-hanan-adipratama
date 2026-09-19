@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Habit Shaper Visual Asset Kit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--warm:#fff8f6;--white:#fff;--red:#a93f3b;--soft:#e67a72;--blush:#f8dedb;--ink:#261f1f;--border:#dfb7b3}
+    *{box-sizing:border-box}body{margin:0;background:var(--warm);color:var(--ink);font-family:"Space Grotesk",sans-serif}
+    main{width:min(1180px,calc(100% - 40px));margin:auto;padding:64px 0 96px}
+    header{display:grid;grid-template-columns:1.4fr .6fr;gap:40px;align-items:end;border-bottom:1px solid var(--border);padding-bottom:34px}
+    h1,h2{font-family:"Barlow Condensed",sans-serif;text-transform:uppercase;letter-spacing:-.035em;line-height:.9;margin:0}
+    h1{font-size:clamp(64px,10vw,124px)}h1 span{color:var(--red)}h2{font-size:44px}
+    .eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;color:var(--red)}header p{line-height:1.65;color:#6f5f5d}
+    section{padding:64px 0;border-bottom:1px solid var(--border)}.section-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:30px}
+    .section-head p{max-width:440px;margin:0;color:#756462;line-height:1.55}
+    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}.card{min-height:260px;padding:25px;border:1px solid var(--border);border-radius:22px;background:white;box-shadow:0 7px 0 rgb(169 63 59 / 14%)}
+    .card.dark{background:var(--red);color:white}.card img{display:block;width:100%;height:180px;object-fit:contain}.card small{display:block;margin-top:17px;font-weight:700}
+    .icons{display:grid;grid-template-columns:repeat(8,1fr);gap:12px}.icon{display:grid;place-items:center;aspect-ratio:1;border:1px solid var(--border);border-radius:16px;background:white}.icon img{width:34px}
+    .wide{display:grid;grid-template-columns:1fr 1fr;gap:20px}.wide img{width:100%;border-radius:22px;border:1px solid var(--border)}
+    .motion{display:grid;grid-template-columns:.6fr 1.4fr;gap:20px}.motion>div{display:grid;gap:20px}.motion img{display:block;width:100%;height:100%;min-height:210px;object-fit:contain;border-radius:22px;background:white;border:1px solid var(--border)}
+    footer{padding-top:32px;display:flex;justify-content:space-between;font-size:12px;font-weight:700;letter-spacing:.08em}
+    @media(max-width:760px){header,.wide,.motion{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.icons{grid-template-columns:repeat(4,1fr)}.section-head{display:block}.section-head p{margin-top:12px}}
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div><div class="eyebrow">MONUMENT / VISUAL SYSTEM</div><h1>CALM<br><span>MOMENTUM.</span></h1></div>
+    <p>A compact visual kit for Habit Shaper: professional gamification, visible progress, and recovery without punishment.</p>
+  </header>
+  <section>
+    <div class="section-head"><h2>Logo system</h2><p>The Step represents a small action becoming repeated, visible progress.</p></div>
+    <div class="grid">
+      <div class="card"><img src="logo/the-step-primary.svg" alt="Primary logo"><small>PRIMARY</small></div>
+      <div class="card dark"><img src="logo/the-step-inverted.svg" alt="Inverted logo"><small>INVERTED</small></div>
+      <div class="card"><img src="logo/the-step-monochrome.svg" alt="Monochrome logo"><small>MONOCHROME</small></div>
+    </div>
+  </section>
+  <section>
+    <div class="section-head"><h2>Functional icons</h2><p>One stroke language for habit type, action, goal, and statistics.</p></div>
+    <div class="icons">
+      <div class="icon"><img src="icons/build.svg" alt="Build"></div><div class="icon"><img src="icons/break.svg" alt="Break"></div>
+      <div class="icon"><img src="icons/complete.svg" alt="Complete"></div><div class="icon"><img src="icons/relapse.svg" alt="Reset"></div>
+      <div class="icon"><img src="icons/goal.svg" alt="Goal"></div><div class="icon"><img src="icons/statistics.svg" alt="Statistics"></div>
+      <div class="icon"><img src="icons/personal-best.svg" alt="Personal best"></div><div class="icon"><img src="icons/streak.svg" alt="Streak"></div>
+    </div>
+  </section>
+  <section>
+    <div class="section-head"><h2>Pattern & recovery</h2><p>Supportive visual texture and a non-punitive illustration for restart moments.</p></div>
+    <div class="wide"><img src="patterns/step-grid.svg" alt="Step pattern"><img src="illustrations/recovery-progress.svg" alt="Recovery illustration"></div>
+  </section>
+  <section>
+    <div class="section-head"><h2>Motion responses</h2><p>State-led motion: small for everyday progress, bold only for meaningful milestones.</p></div>
+    <div class="motion">
+      <div><img src="motion/flame-active.svg" alt="Animated flame"><img src="motion/completion-success.svg" alt="Completion animation"></div>
+      <img src="motion/milestone-day-7.svg" alt="Seven day milestone animation">
+    </div>
+  </section>
+  <footer><span>HABIT SHAPER</span><span>SMALL ACTIONS. VISIBLE PROGRESS.</span></footer>
+</main>
+</body>
+</html>

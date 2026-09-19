@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="640" viewBox="0 0 640 640" role="img" aria-labelledby="title desc">
+  <title id="title">Habit Shaper step pattern</title>
+  <desc id="desc">A quiet repeating field of ascending three-step marks.</desc>
+  <defs>
+    <pattern id="steps" width="160" height="160" patternUnits="userSpaceOnUse">
+      <g fill="none" stroke="#A93F3B" stroke-linecap="round" opacity=".14">
+        <path d="M28 98h28M28 78h52M28 58h76" stroke-width="9"/>
+      </g>
+      <circle cx="125" cy="122" r="4" fill="#E67A72" opacity=".2"/>
+    </pattern>
+  </defs>
+  <rect width="640" height="640" fill="#FFF8F6"/>
+  <rect width="640" height="640" fill="url(#steps)"/>
+</svg>

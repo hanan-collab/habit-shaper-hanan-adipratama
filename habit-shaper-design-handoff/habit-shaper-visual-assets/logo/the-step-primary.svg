@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">Habit Shaper primary logo</title>
+  <desc id="desc">A raised rounded tile containing three ascending steps.</desc>
+  <rect x="28" y="34" width="104" height="104" rx="25" fill="#7F2F2C"/>
+  <rect x="28" y="22" width="104" height="104" rx="25" fill="#FFFFFF" stroke="#E67A72" stroke-width="5"/>
+  <path d="M52 94h26M52 76h48M52 58h66" fill="none" stroke="#A93F3B" stroke-width="10" stroke-linecap="round"/>
+</svg>

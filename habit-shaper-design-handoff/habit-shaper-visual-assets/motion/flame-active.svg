@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title desc">
+  <title id="title">Active streak flame</title>
+  <desc id="desc">A soft rounded flame gently breathes to show an active streak.</desc>
+  <style>
+    .flame{transform-origin:60px 68px;animation:breathe 1.75s cubic-bezier(.45,0,.55,1) infinite}
+    .inner{transform-origin:60px 76px;animation:inner 1.75s cubic-bezier(.45,0,.55,1) infinite}
+    @keyframes breathe{50%{transform:translateY(-2.5px) scale(1.025)}}
+    @keyframes inner{50%{transform:translateY(1px) scale(.94);opacity:.78}}
+    @media(prefers-reduced-motion:reduce){.flame,.inner{animation:none}}
+  </style>
+  <g class="flame">
+    <path d="M60 14c12 18 14 33 8 45 10-7 15-16 16-27 12 14 20 29 20 46 0 20-17 35-39 35-24 0-43-17-43-39 0-18 12-32 24-44 6-6 11-11 14-16Z" fill="#A93F3B" stroke="#7F2F2C" stroke-width="3" stroke-linejoin="round"/>
+    <path class="inner" d="M65 59c8 10 12 19 12 28 0 9-6 15-14 15-9 0-15-6-15-14 0-8 5-14 10-20 3-3 5-6 7-9Z" fill="#F8DEDB"/>
+  </g>
+</svg>

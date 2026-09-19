@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">Habit Shaper monochrome logo</title>
+  <desc id="desc">A single-color raised step mark.</desc>
+  <rect x="28" y="34" width="104" height="104" rx="25" fill="#261F1F" opacity=".28"/>
+  <rect x="28" y="22" width="104" height="104" rx="25" fill="#FFFFFF" stroke="#261F1F" stroke-width="5"/>
+  <path d="M52 94h26M52 76h48M52 58h66" fill="none" stroke="#261F1F" stroke-width="10" stroke-linecap="round"/>
+</svg>

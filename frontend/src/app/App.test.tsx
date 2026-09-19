@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import { expect, test } from 'vitest';
 import { App } from './App';
+import { AppProviders } from './providers';
 
-test('renders the scaffold without presenting implemented features', () => {
-  render(<App />);
-  expect(screen.getByRole('heading', { name: 'Habit Shaper scaffold' })).toBeInTheDocument();
-  expect(screen.getByText(/Product features are not implemented/)).toBeInTheDocument();
+test('renders the public route through the application router', () => {
+  render(<AppProviders><App /></AppProviders>);
+  expect(screen.getByRole('heading',{name:'Build what helps.'})).toBeInTheDocument();
 });

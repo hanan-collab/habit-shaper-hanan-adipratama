@@ -1,0 +1,1 @@
+export function BrandMark({inverted=false,size=42}:{inverted?:boolean;size?:number}){return <img width={size} height={size} src={`/brand/logo/the-step-${inverted?'inverted':'primary'}.svg`} alt="Habit Shaper"/>}

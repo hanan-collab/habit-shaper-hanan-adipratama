@@ -1,0 +1,44 @@
+:root {
+  --habit-warm-white: #fff8f6;
+  --habit-white: #ffffff;
+  --habit-soft-red: #e67a72;
+  --habit-blush: #f8dedb;
+  --habit-deep-red: #a93f3b;
+  --habit-deep-red-dark: #7f2f2c;
+  --habit-warm-ink: #261f1f;
+  --habit-soft-border: #dfb7b3;
+
+  --habit-radius-control: 12px;
+  --habit-radius-card: 16px;
+  --habit-radius-feature: 22px;
+
+  --habit-font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --habit-font-ui: "Space Grotesk", Arial, sans-serif;
+
+  --habit-motion-fast: 200ms;
+  --habit-motion-response: 600ms;
+  --habit-motion-milestone: 900ms;
+}
+
+.habit-raised-primary {
+  background: var(--habit-deep-red);
+  color: var(--habit-white);
+  border: 1px solid var(--habit-deep-red-dark);
+  border-radius: var(--habit-radius-control);
+  box-shadow: 0 5px 0 var(--habit-deep-red-dark);
+}
+
+.habit-raised-card {
+  background: var(--habit-white);
+  border: 1px solid var(--habit-soft-border);
+  border-radius: var(--habit-radius-feature);
+  box-shadow: 0 7px 0 rgb(169 63 59 / 14%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --habit-motion-fast: 1ms;
+    --habit-motion-response: 1ms;
+    --habit-motion-milestone: 1ms;
+  }
+}
