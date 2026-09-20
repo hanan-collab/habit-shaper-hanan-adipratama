@@ -12,7 +12,6 @@ export function createDashboardRepository(prisma: PrismaClient): DashboardReposi
         where: { userId },
         include: {
           events: { orderBy: { date: 'asc' } },
-          goals: { where: { activeSlot: 1 }, orderBy: { createdAt: 'asc' } },
         },
         orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
       });

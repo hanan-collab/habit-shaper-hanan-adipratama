@@ -1,10 +1,10 @@
 import type { RequestHandler } from 'express';
 import { parseBody, parseInput } from '../../common/validation.js';
-import { createGoalDto, goalIdParamsDto, habitGoalParamsDto, updateGoalDto } from './goal.dto.js';
+import { connectGoalDto, createGoalDto, createMultiGoalDto, goalIdParamsDto, habitGoalParamsDto, updateGoalDto } from './goal.dto.js';
 import type { GoalService } from './goal.service.js';
 
 export type GoalController = {
-  list: RequestHandler; create: RequestHandler; update: RequestHandler; delete: RequestHandler; cancel: RequestHandler;
+  list: RequestHandler; create: RequestHandler; createMulti: RequestHandler; connect: RequestHandler; update: RequestHandler; delete: RequestHandler; cancel: RequestHandler;
 };
 
 export function createGoalController(service: GoalService): GoalController {
@@ -18,6 +18,17 @@ export function createGoalController(service: GoalService): GoalController {
       if (!path || !input) return;
       const goal = await service.create(request.authUser!.id, request.authUser!.timezone, path.habitId, input);
       response.status(201).json({ goal });
+    },
+    createMulti: async (request, response) => {
+      const input = parseBody(createMultiGoalDto, request.body, response);
+      if (!input) return;
+      response.status(201).json({ goal: await service.createMulti(request.authUser!.id, request.authUser!.timezone, input) });
+    },
+    connect: async (request, response) => {
+      const path = parseInput(habitGoalParamsDto, request.params, response, 'Request parameters are invalid');
+      const input = parseBody(connectGoalDto, request.body, response);
+      if (!path || !input) return;
+      response.json({ goals: await service.connectHabit(request.authUser!.id, request.authUser!.timezone, path.habitId, input.goalIds) });
     },
     update: async (request, response) => {
       const path = parseInput(goalIdParamsDto, request.params, response, 'Request parameters are invalid');

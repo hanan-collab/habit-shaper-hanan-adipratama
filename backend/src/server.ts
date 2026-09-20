@@ -27,8 +27,8 @@ const authService = createAuthService(authRepository, {
 const healthService = createHealthService(createHealthRepository(() => prisma.$queryRaw`SELECT 1`));
 const statisticsService = createStatisticsService(createStatisticsRepository(prisma));
 const gamificationService = createGamificationService();
-const habitService = createHabitService(createHabitRepository(prisma), gamificationService);
-const goalService = createGoalService(createGoalRepository(prisma), statisticsService);
+const goalService = createGoalService(createGoalRepository(prisma));
+const habitService = createHabitService(createHabitRepository(prisma), gamificationService, goalService);
 const trackingService = createTrackingService(
   createTrackingRepository(prisma), statisticsService, goalService, gamificationService,
 );

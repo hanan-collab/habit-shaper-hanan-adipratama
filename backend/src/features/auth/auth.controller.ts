@@ -47,7 +47,7 @@ export function createAuthController(service: AuthService, config: ControllerCon
     completeOnboarding: async (request, response) => {
       const input = parseBody(onboardingDto, request.body, response);
       if (!input) return;
-      const user = await service.completeOnboarding(request.authUser!.id);
+      const user = await service.completeOnboarding(request.authUser!.id, input);
       response.json({ user });
     },
   };

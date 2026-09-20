@@ -13,9 +13,10 @@ const timezone = z.string().trim().min(1).max(100).refine((value) => {
   }
 }, 'Timezone must be a valid IANA timezone');
 
-export const registerDto = z.strictObject({ email, password, timezone });
+export const registerDto = z.strictObject({ email, password, timezone: timezone.optional().default('UTC') });
 export const loginDto = z.strictObject({ email, password });
-export const onboardingDto = z.strictObject({ completed: z.literal(true) });
+export const onboardingDto = z.strictObject({ completed: z.literal(true), timezone });
 
 export type RegisterDto = z.infer<typeof registerDto>;
 export type LoginDto = z.infer<typeof loginDto>;
+export type OnboardingDto = z.infer<typeof onboardingDto>;

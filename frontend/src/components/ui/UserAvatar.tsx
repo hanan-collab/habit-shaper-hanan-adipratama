@@ -1,3 +1,16 @@
-import styles from'./UserAvatar.module.css';
-const avatarNumber=(seed:string)=>String([...seed].reduce((total,character)=>((total*31)+character.charCodeAt(0))%99,0)+1).padStart(2,'0');
-export function UserAvatar({seed,size='small',className=''}:{seed:string;size?:'small'|'large';className?:string}){return <span className={`${styles.avatar} ${styles[size]} ${className}`} aria-label={`Profile number ${avatarNumber(seed)}`}>{avatarNumber(seed)}</span>}
+import styles from './UserAvatar.module.css';
+
+export function profileInitial(username?: string | null, email?: string | null) {
+  const source = username?.trim() || email?.trim() || '?';
+  return [...source][0]?.toLocaleUpperCase() ?? '?';
+}
+
+export function UserAvatar({ username, email, size = 'small', className = '' }: {
+  username?: string | null;
+  email?: string | null;
+  size?: 'small' | 'large';
+  className?: string;
+}) {
+  const initial = profileInitial(username, email);
+  return <span className={`${styles.avatar} ${styles[size]} ${className}`} aria-label={`Profile initial ${initial}`}><span className={styles.glyph} aria-hidden="true">{initial}</span></span>;
+}

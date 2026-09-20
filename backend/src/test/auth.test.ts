@@ -11,8 +11,9 @@ const now = new Date('2026-09-19T00:00:00.000Z');
 const user: PublicUser = {
   id: 'user-1',
   email: 'person@example.com',
+  username: 'person',
   timezone: 'Asia/Jakarta',
-  onboardingCompletedAt: null,
+  onboardingCompleted: false,
   createdAt: now,
   updatedAt: now,
 };
@@ -24,7 +25,7 @@ function service(overrides: Partial<AuthService> = {}): AuthService {
     login: vi.fn(async () => ({ user, token: 'login-token', expiresAt: new Date('2026-09-26T00:00:00.000Z') })),
     getUserForToken: vi.fn(async (token) => token ? user : null),
     logout: vi.fn(async () => undefined),
-    completeOnboarding: vi.fn(async () => ({ ...user, onboardingCompletedAt: now })),
+    completeOnboarding: vi.fn(async () => ({ ...user, onboardingCompleted: true })),
     ...overrides,
   };
 }
@@ -62,6 +63,17 @@ describe('auth HTTP API', () => {
     expect(auth.register).not.toHaveBeenCalled();
   });
 
+  test('defaults registration timezone to UTC when the client has not asked for browser detection', async () => {
+    const auth = service();
+    const app = createApp({ healthService, authService: auth });
+    await request(app).post('/api/auth/register').send({
+      email: 'person@example.com', password: 'correct horse battery staple',
+    }).expect(201);
+    expect(auth.register).toHaveBeenCalledWith({
+      email: 'person@example.com', password: 'correct horse battery staple', timezone: 'UTC',
+    });
+  });
+
   test('supports authenticated me, onboarding, and logout requests', async () => {
     const auth = service();
     const app = createApp({ healthService, authService: auth });
@@ -70,9 +82,10 @@ describe('auth HTTP API', () => {
     await agent.get('/api/auth/me').expect(200).expect((response) => {
       expect(response.body.user.email).toBe(user.email);
     });
-    await agent.patch('/api/auth/onboarding').send({ completed: true }).expect(200).expect((response) => {
-      expect(response.body.user.onboardingCompletedAt).toBe(now.toISOString());
+    await agent.patch('/api/auth/onboarding').send({ completed: true, timezone: 'Asia/Jakarta' }).expect(200).expect((response) => {
+      expect(response.body.user.onboardingCompleted).toBe(true);
     });
+    expect(auth.completeOnboarding).toHaveBeenCalledWith(user.id, { completed: true, timezone: 'Asia/Jakarta' });
     const logout = await agent.post('/api/auth/logout').expect(204);
     expect(logout.headers['set-cookie'][0]).toMatch(/^habit_session=;/);
     expect(auth.logout).toHaveBeenCalledWith('login-token');

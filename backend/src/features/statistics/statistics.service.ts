@@ -74,7 +74,9 @@ export function createStatisticsService(repository: StatisticsRepository, now: (
       : eligible.filter((value) => relapses.includes(value)).length;
     const completedDays = eligible.length - missedDays;
     const completionRate = eligible.length === 0 ? 0 : Math.round((completedDays / eligible.length) * 10000) / 100;
-    const totalCompletions = source.type === HabitKind.Build ? completed.size : 0;
+    const totalCompletions = source.type === HabitKind.Build
+      ? completed.size
+      : Math.max(0, eachDate(start, today).length - relapses.filter((value) => value >= start && value <= today).length);
     const lastRelapseDate = relapses.at(-1) ?? null;
     return {
       habitId: source.id,

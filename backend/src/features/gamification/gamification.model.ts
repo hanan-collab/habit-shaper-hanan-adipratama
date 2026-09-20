@@ -18,7 +18,7 @@ export type GoalGamificationState = {
   id: string;
   status: 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
   currentProgress: number;
-  targetStreakDays: number;
+  targetDays: number;
   percentage: number;
   remainingDays: number;
 };

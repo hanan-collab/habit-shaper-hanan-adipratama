@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, Check, RotateCcw, Sparkles, Target } from 'lucide-react';
 import { Link } from 'react-router';
-import { Particles } from '../../components/magicui';
+import { HabitPreviewCard } from '../../components/ui/HabitPreviewCard';
 import { UserAvatar } from '../../components/ui/UserAvatar';
 import { localDate } from '../../lib/api';
 import { useSession } from '../auth/auth.queries';
@@ -92,7 +92,7 @@ function AnimatedActivityList() {
 }
 
 type ProductPreviewProps = {
-  avatarSeed?: string;
+  avatarUser?: { username?: string | null; email: string };
   dateLabel: string;
   done: boolean;
   habitName: string;
@@ -104,7 +104,7 @@ type ProductPreviewProps = {
   onToggle: () => void;
 };
 
-function ProductPreview({ avatarSeed, dateLabel, done, habitName, momentum, pending, burstKey, streak, weekCompleted, onToggle }: ProductPreviewProps) {
+function ProductPreview({ avatarUser, dateLabel, done, habitName, momentum, pending, burstKey, streak, weekCompleted, onToggle }: ProductPreviewProps) {
   const completedDays = Math.min(7, Math.max(0, weekCompleted));
   return (
     <div className={styles.productStage}>
@@ -115,8 +115,8 @@ function ProductPreview({ avatarSeed, dateLabel, done, habitName, momentum, pend
             <StepMark compact />
             <span><b>Today</b><small>{dateLabel}</small></span>
           </div>
-          {avatarSeed
-            ? <Link className={styles.avatarLink} to="/app/settings"><UserAvatar seed={avatarSeed} /></Link>
+          {avatarUser
+            ? <Link className={styles.avatarLink} to="/app/settings"><UserAvatar username={avatarUser.username} email={avatarUser.email} /></Link>
             : <Link className={styles.avatar} to="/login" aria-label="Log in">AV</Link>}
         </div>
 
@@ -129,28 +129,13 @@ function ProductPreview({ avatarSeed, dateLabel, done, habitName, momentum, pend
           <div className={styles.weekDots} aria-label={`${completedDays} of seven days completed`}>
             {[0, 1, 2, 3, 4, 5, 6].map((day) => (
               <i className={day < completedDays ? styles.isDone : undefined} key={day}>
-                {day < completedDays ? <Check size={11} /> : 'T'}
+                {day < completedDays ? <Check size={11} /> : 'S'}
               </i>
             ))}
           </div>
         </div>
 
-        <div className={styles.habitCard}>
-          {burstKey > 0 && <Particles burstKey={burstKey} />}
-          <div className={styles.habitTopline}>
-            <span className={styles.habitIcon}><img src="/brand/motion/flame-active.svg" alt="" /></span>
-            <span><small>BUILD</small><b>{habitName}</b></span>
-            <strong>{streak}<small>DAY STREAK</small></strong>
-          </div>
-          <button
-            className={done ? `${styles.completeButton} ${styles.isComplete}` : styles.completeButton}
-            type="button"
-            disabled={pending}
-            onClick={onToggle}
-          >
-            <span>{done ? <Check size={18} /> : null}{pending ? 'SAVING…' : done ? 'COMPLETED' : 'COMPLETE TODAY'}</span>
-          </button>
-        </div>
+        <HabitPreviewCard name={habitName} streak={streak} done={done} pending={pending} burstKey={burstKey} onToggle={onToggle} />
 
         <AnimatedActivityList />
       </div>
@@ -172,7 +157,7 @@ export function LandingPage() {
   const dashboard = useQuery({
     queryKey: ['dashboard'],
     queryFn: dashboardApi.get,
-    enabled: Boolean(user?.onboardingCompletedAt),
+    enabled: Boolean(user?.onboardingCompleted),
   });
   const liveDashboard = dashboard.data?.dashboard;
   const liveHabit = liveDashboard?.habits.find((habit) => habit.type === 'BUILD');
@@ -200,7 +185,7 @@ export function LandingPage() {
     ? new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeZone: user?.timezone }).format(new Date(`${liveDashboard.date}T12:00:00`))
     : 'Tuesday, 18 Sep';
   const appDestination = user
-    ? (user.onboardingCompletedAt ? '/app' : '/onboarding')
+    ? (user.onboardingCompleted ? '/app' : '/onboarding')
     : '/register';
   const toggleCompletion = () => {
     if (liveHabit) completion.mutate();
@@ -244,7 +229,7 @@ export function LandingPage() {
           </div>
         </div>
         <ProductPreview
-          avatarSeed={user?.id || user?.email}
+          avatarUser={user}
           dateLabel={dateLabel}
           done={done}
           habitName={liveHabit?.name ?? 'Read for 20 minutes'}
@@ -260,9 +245,9 @@ export function LandingPage() {
       <section className={styles.momentumBand} aria-label="Habit Shaper promise">
         <div className={styles.momentumCopy}>
           <span>CONSISTENCY, MADE VISIBLE.</span>
+          <div className={styles.momentumSteps} aria-hidden="true"><i /><i /><i /></div>
           <span>PROGRESS, WITHOUT PUNISHMENT.</span>
         </div>
-        <div className={styles.momentumSteps} aria-hidden="true"><i /><i /><i /></div>
       </section>
 
       <section className={styles.methodSection} id="method">

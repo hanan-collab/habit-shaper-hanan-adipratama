@@ -26,12 +26,14 @@ enum GoalStatus {
 model User {
   id                    String    @id @default(uuid()) @db.Char(36)
   email                 String    @unique @db.VarChar(191)
+  username              String    @db.VarChar(191)
   passwordHash          String    @db.VarChar(255)
   timezone              String    @db.VarChar(100)
-  onboardingCompletedAt DateTime? @db.DateTime(3)
+  onboardingCompleted   Boolean   @default(false)
   createdAt             DateTime  @default(now()) @db.DateTime(3)
   updatedAt             DateTime  @updatedAt @db.DateTime(3)
   habits                Habit[]
+  goals                 Goal[]
   sessions              Session[]
 }
 
@@ -59,7 +61,7 @@ model Habit {
   updatedAt   DateTime     @updatedAt @db.DateTime(3)
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   events      HabitEvent[]
-  goals       Goal[]
+  goalLinks   GoalHabit[]
 
   @@index([userId])
 }
@@ -78,17 +80,44 @@ model HabitEvent {
 
 model Goal {
   id               String     @id @default(uuid()) @db.Char(36)
-  habitId          String     @db.Char(36)
+  userId           String     @db.Char(36)
   title            String     @db.VarChar(191)
-  targetStreakDays  Int
+  targetDays        Int
   deadline         DateTime?  @db.Date
   status           GoalStatus @default(ACTIVE)
-  activeSlot       Int?
   completedDate    DateTime?  @db.Date
+  finalProgressDays Int?
+  lastEvaluatedDate DateTime? @db.Date
   createdAt        DateTime   @default(now()) @db.DateTime(3)
   updatedAt        DateTime   @updatedAt @db.DateTime(3)
-  habit            Habit      @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  habitLinks       GoalHabit[]
+  progressDays     GoalProgressDay[]
 
-  @@index([habitId, status])
-  @@unique([habitId, activeSlot])
+  @@index([userId, status])
+}
+
+model GoalHabit {
+  id             String    @id @default(uuid()) @db.Char(36)
+  goalId         String    @db.Char(36)
+  habitId        String    @db.Char(36)
+  connectedOn    DateTime  @db.Date
+  disconnectedOn DateTime? @db.Date
+  createdAt      DateTime  @default(now()) @db.DateTime(3)
+  goal           Goal      @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  habit          Habit     @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  @@index([goalId, connectedOn, disconnectedOn])
+  @@index([habitId, disconnectedOn])
+}
+
+model GoalProgressDay {
+  id        String   @id @default(uuid()) @db.Char(36)
+  goalId    String   @db.Char(36)
+  date      DateTime @db.Date
+  createdAt DateTime @default(now()) @db.DateTime(3)
+  goal      Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@unique([goalId, date])
+  @@index([goalId])
 }

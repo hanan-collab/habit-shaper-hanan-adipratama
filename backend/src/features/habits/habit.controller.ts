@@ -34,7 +34,7 @@ export function createHabitController(service: HabitService): HabitController {
     delete: async (request, response) => {
       const path = params(habitIdParamsDto, request.params, response);
       if (!path) return;
-      await service.delete(request.authUser!.id, path.habitId);
+      await service.delete(request.authUser!.id, path.habitId, request.authUser!.timezone);
       response.status(204).send();
     },
   };

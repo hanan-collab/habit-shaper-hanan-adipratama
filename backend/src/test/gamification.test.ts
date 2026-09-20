@@ -12,7 +12,7 @@ const stats = (overrides: Partial<HabitStatisticsModel> = {}): HabitStatisticsMo
   lastRelapse: null, lastRelapseDate: null, ...overrides,
 });
 const goal = (overrides: Partial<GoalGamificationState> = {}): GoalGamificationState => ({
-  id: 'goal-1', status: 'ACTIVE', currentProgress: 2, targetStreakDays: 7,
+  id: 'goal-1', status: 'ACTIVE', currentProgress: 2, targetDays: 7,
   percentage: 28.57, remainingDays: 5, ...overrides,
 });
 const service = createGamificationService();
@@ -58,8 +58,8 @@ describe('gamification service', () => {
       action: GamificationAction.BuildCompleted, eventCreated: true, habitId: 'habit-1',
       before: stats({ currentStreak: 4, longestStreak: 5, totalCompletions: 5 }),
       after: stats({ currentStreak: 5, longestStreak: 5, totalCompletions: 6 }),
-      goalBefore: goal({ currentProgress: 4, targetStreakDays: 6, percentage: 40, remainingDays: 2 }),
-      goalAfter: goal({ currentProgress: 5, targetStreakDays: 6, percentage: 83.33, remainingDays: 1 }),
+      goalBefore: goal({ currentProgress: 4, targetDays: 6, percentage: 40, remainingDays: 2 }),
+      goalAfter: goal({ currentProgress: 5, targetDays: 6, percentage: 83.33, remainingDays: 1 }),
       localDate: '2026-09-19',
     });
     expect(result.map(({ type }) => type)).toEqual([

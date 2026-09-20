@@ -19,7 +19,7 @@ function ProtectedShell() {
   const session = useSession();
   if (session.isLoading) return <div className="pageWidth" style={{paddingTop:80}}><div className="skeleton" /></div>;
   if (!session.data?.user) return <Navigate to="/login" replace />;
-  if (!session.data.user.onboardingCompletedAt) return <Navigate to="/onboarding" replace />;
+  if (!session.data.user.onboardingCompleted) return <Navigate to="/onboarding" replace />;
   return <AppShell />;
 }
 

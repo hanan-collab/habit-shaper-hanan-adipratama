@@ -43,7 +43,7 @@
 .methodLink { color: var(--deep-red) !important; font-size: 13px; font-weight: 700; }
 .raisedButton {
   display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 52px; padding: 0 22px;
-  border: 1px solid var(--deep-red-dark); border-radius: 12px; background: var(--deep-red); color: var(--white);
+  border: 1px solid var(--deep-red-dark); border-radius: 12px; background: var(--deep-red); color: var(--white) !important;
   box-shadow: 0 6px 0 var(--deep-red-dark); font-size: 14px; font-weight: 700; transition: transform 160ms ease, box-shadow 160ms ease;
 }
 .raisedButton:hover { transform: translateY(-2px); box-shadow: 0 8px 0 var(--deep-red-dark); }

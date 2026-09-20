@@ -6,8 +6,9 @@ export class DuplicateEmailRepositoryError extends Error {}
 const publicUserSelect = {
   id: true,
   email: true,
+  username: true,
   timezone: true,
-  onboardingCompletedAt: true,
+  onboardingCompleted: true,
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.UserSelect;
@@ -22,7 +23,7 @@ export interface AuthRepository {
   deleteSessionById(id: string): Promise<void>;
   deleteSessionByTokenHash(tokenHash: string): Promise<void>;
   touchSession(id: string, date: Date): Promise<void>;
-  completeOnboarding(userId: string, date: Date): Promise<PublicUser>;
+  completeOnboarding(userId: string, timezone: string): Promise<PublicUser>;
 }
 
 export function createAuthRepository(prisma: PrismaClient): AuthRepository {
@@ -31,7 +32,7 @@ export function createAuthRepository(prisma: PrismaClient): AuthRepository {
       try {
         return await prisma.$transaction(async (transaction) => {
           const user = await transaction.user.create({
-            data: { email: input.email, passwordHash: input.passwordHash, timezone: input.timezone },
+            data: { email: input.email, username: input.email.split('@')[0], passwordHash: input.passwordHash, timezone: input.timezone },
             select: publicUserSelect,
           });
           await transaction.session.create({
@@ -67,9 +68,9 @@ export function createAuthRepository(prisma: PrismaClient): AuthRepository {
     async touchSession(id, date) {
       await prisma.session.updateMany({ where: { id }, data: { lastUsedAt: date } });
     },
-    completeOnboarding(userId, date) {
+    completeOnboarding(userId, timezone) {
       return prisma.user.update({
-        where: { id: userId }, data: { onboardingCompletedAt: date }, select: publicUserSelect,
+        where: { id: userId }, data: { onboardingCompleted: true, timezone }, select: publicUserSelect,
       });
     },
   };

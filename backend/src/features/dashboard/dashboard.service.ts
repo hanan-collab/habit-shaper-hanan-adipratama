@@ -43,7 +43,7 @@ export function createDashboardService(
           startDate: habit.startDate.toISOString().slice(0, 10),
           todayStatus,
           statistics: statisticsService.calculate(habit, timezone),
-          activeGoalId: goals.find((goal) => goal.habitId === habit.id)?.id ?? null,
+          activeGoalId: goals.find((goal) => goal.habits.some((item) => item.id === habit.id))?.id ?? null,
         };
       });
       return {

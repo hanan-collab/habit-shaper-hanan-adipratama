@@ -1,4 +1,4 @@
-import type { Goal, Habit, HabitEvent } from '@prisma/client';
+import type { Habit, HabitEvent } from '@prisma/client';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { createGamificationService } from '../features/gamification/gamification.service.js';
 import type { GoalService } from '../features/goals/goal.service.js';
@@ -16,12 +16,12 @@ const event = (type: HabitEvent['type']): HabitEvent => ({
   id: 'event-1', habitId: 'habit-1', type, date: new Date(`${today}T00:00:00.000Z`),
   note: null, createdAt: new Date(),
 });
-let source: Habit & { events: HabitEvent[]; goals: Goal[] };
+let source: Habit & { events: HabitEvent[] };
 let repository: TrackingRepository;
 let goalService: GoalService;
 
 beforeEach(() => {
-  source = { ...habit('BUILD'), events: [], goals: [] };
+  source = { ...habit('BUILD'), events: [] };
   repository = {
     findSource: vi.fn(async () => source),
     putEvent: vi.fn(async (data) => ({ event: { ...event(data.type), ...data }, created: true })),
@@ -29,7 +29,7 @@ beforeEach(() => {
   };
   goalService = {
     gamificationState: vi.fn(),
-    syncAfterStreakChange: vi.fn(async () => null),
+    reconcileHabit: vi.fn(async () => []),
   } as unknown as GoalService;
 });
 
@@ -57,30 +57,13 @@ describe('tracking service', () => {
     expect(result.meta.gamificationEvents).toEqual([]);
   });
 
-  test('synchronizes an active goal and emits goal completion first', async () => {
-    const activeGoal: Goal = {
-      id: 'goal-1', habitId: source.id, title: 'One day', targetStreakDays: 1,
-      deadline: null, status: 'ACTIVE', activeSlot: 1, completedDate: null,
-      createdAt: new Date(), updatedAt: new Date(),
-    };
-    source.goals = [activeGoal];
-    goalService.gamificationState = vi.fn(() => ({
-      id: activeGoal.id, status: 'ACTIVE' as const, currentProgress: 0,
-      targetStreakDays: 1, percentage: 0, remainingDays: 1,
-    }));
-    goalService.syncAfterStreakChange = vi.fn(async () => ({
-      id: activeGoal.id, status: 'COMPLETED' as const, currentProgress: 1,
-      targetStreakDays: 1, percentage: 100, remainingDays: 0,
-    }));
-    const result = await service().put('user-1', 'UTC', source.id, today, TrackingEventKind.Completed, {});
-    expect(result.data.goal?.status).toBe('COMPLETED');
-    expect(result.meta.gamificationEvents[0]).toMatchObject({
-      type: 'GOAL_COMPLETED', level: 'MILESTONE', goalId: activeGoal.id, target: 1,
-    });
+  test('reconciles every connected goal after a new event', async () => {
+    await service().put('user-1', 'UTC', source.id, today, TrackingEventKind.Completed, {});
+    expect(goalService.reconcileHabit).toHaveBeenCalledWith('user-1', 'UTC', source.id, today);
   });
 
   test('returns only a recovery event for a BREAK relapse', async () => {
-    source = { ...habit('BREAK'), events: [], goals: [] };
+    source = { ...habit('BREAK'), events: [] };
     repository.putEvent = vi.fn(async () => ({ event: event('RELAPSED'), created: true }));
     const result = await service().put('user-1', 'UTC', source.id, today, TrackingEventKind.Relapsed, {});
     expect(result.meta.gamificationEvents).toEqual([

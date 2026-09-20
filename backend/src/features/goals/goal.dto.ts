@@ -7,17 +7,25 @@ const dateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected YYYY-MM-DD').
 
 export const goalIdParamsDto = z.strictObject({ goalId: z.string().uuid() });
 export const habitGoalParamsDto = z.strictObject({ habitId: z.string().uuid() });
+export const createMultiGoalDto = z.strictObject({
+  title: z.string().trim().min(1).max(191), targetDays: z.number().int().min(1).max(100000),
+  deadline: dateOnly.nullable().optional(), habitIds: z.array(z.string().uuid()).min(1).max(100),
+});
 export const createGoalDto = z.strictObject({
   title: z.string().trim().min(1).max(191),
-  targetStreakDays: z.number().int().min(1).max(100000),
+  targetDays: z.number().int().min(1).max(100000),
   deadline: dateOnly.nullable().optional(),
 });
 export const updateGoalDto = z.strictObject({
   title: z.string().trim().min(1).max(191).optional(),
-  targetStreakDays: z.number().int().min(1).max(100000).optional(),
+  targetDays: z.number().int().min(1).max(100000).optional(),
   deadline: dateOnly.nullable().optional(),
+  habitIds: z.array(z.string().uuid()).min(1).max(100).optional(),
 }).refine((value) => Object.keys(value).length > 0, 'At least one field is required');
+
+export const connectGoalDto = z.strictObject({ goalIds: z.array(z.string().uuid()).max(100) });
 
 export type CreateGoalDto = z.infer<typeof createGoalDto>;
 export type UpdateGoalDto = z.infer<typeof updateGoalDto>;
+export type CreateMultiGoalDto = z.infer<typeof createMultiGoalDto>;
 export const goalDate = (value: string) => new Date(`${value}T00:00:00.000Z`);

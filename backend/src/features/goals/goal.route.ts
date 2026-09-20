@@ -9,7 +9,9 @@ export function createGoalRoute(authService: AuthService, goalService: GoalServi
   const controller = createGoalController(goalService);
   const authenticated = requireAuth(authService);
   router.get('/goals', authenticated, controller.list);
+  router.post('/goals', authenticated, controller.createMulti);
   router.post('/habits/:habitId/goals', authenticated, controller.create);
+  router.post('/habits/:habitId/goal-connections', authenticated, controller.connect);
   router.patch('/goals/:goalId', authenticated, controller.update);
   router.delete('/goals/:goalId', authenticated, controller.delete);
   router.post('/goals/:goalId/cancel', authenticated, controller.cancel);

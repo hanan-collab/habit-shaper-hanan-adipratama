@@ -54,8 +54,7 @@ export function createTrackingService(
       const source = await find(userId, habitId);
       validate(source, timezone, date, kind);
       const before = statistics.calculate(source, timezone);
-      const activeGoal = source.goals[0] ?? null;
-      const goalBefore = activeGoal ? goals.gamificationState(activeGoal, before.currentStreak) : null;
+      const goalBefore = null;
       const previousCompletion = kind === TrackingEventKind.Completed
         ? source.events.filter((item) => item.type === TrackingEventKind.Completed && dateKey(item.date) < date).at(-1)
         : undefined;
@@ -70,7 +69,9 @@ export function createTrackingService(
       }
       const afterSource = { ...source, events: [...source.events, result.event].sort((left, right) => left.date.getTime() - right.date.getTime()) };
       const after = statistics.calculate(afterSource, timezone);
-      const goalAfter = await goals.syncAfterStreakChange(activeGoal, timezone, after.currentStreak);
+      const goalTransitions = await goals.reconcileHabit(userId, timezone, habitId, date);
+      const goalAfter = goalTransitions[0]?.after ?? null;
+      const primaryGoalBefore = goalTransitions[0]?.before ?? null;
       const action = kind === TrackingEventKind.Completed
         ? {
             action: GamificationAction.BuildCompleted as const,
@@ -78,7 +79,7 @@ export function createTrackingService(
             habitId,
             before,
             after,
-            goalBefore,
+            goalBefore: primaryGoalBefore,
             goalAfter,
             localDate: date,
             ...(previousCompletion ? { daysAway: Math.max(0, daysBetween(dateKey(previousCompletion.date), date) - 1) } : {}),
@@ -89,15 +90,24 @@ export function createTrackingService(
             habitId,
             previousValue: before.currentStreak,
           };
+      const additionalGoalEvents = kind === TrackingEventKind.Completed ? goalTransitions.slice(1).flatMap((transition) => gamification.evaluate({
+        action: GamificationAction.BuildCompleted, eventCreated: true, habitId, before, after,
+        goalBefore: transition.before, goalAfter: transition.after, localDate: date,
+        ...(previousCompletion ? { daysAway: Math.max(0, daysBetween(dateKey(previousCompletion.date), date) - 1) } : {}),
+      }).filter((item) => item.goalId === transition.after.id)) : [];
       return {
         data: { event: trackingEventResponse(result.event), stats: after, goal: goalAfter },
-        meta: { gamificationEvents: gamification.evaluate(action) },
+        meta: { gamificationEvents: [
+          ...gamification.evaluate(action),
+          ...additionalGoalEvents,
+        ] },
       };
     },
     async delete(userId, timezone, habitId, date, kind) {
       const source = await find(userId, habitId);
       validate(source, timezone, date, kind);
       await repository.deleteEvent(habitId, trackingDate(date), kind as HabitEventType);
+      await goals.reconcileHabit(userId, timezone, habitId, date);
     },
   };
 }

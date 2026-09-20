@@ -1,9 +1,9 @@
-import type { Goal, Habit, HabitEvent } from '@prisma/client';
+import type { Habit, HabitEvent } from '@prisma/client';
 import type { GamificationMetaDto } from '../gamification/gamification.dto.js';
 import type { GoalGamificationState } from '../gamification/gamification.model.js';
 import type { HabitStatisticsModel } from '../statistics/statistics.model.js';
 
-export type TrackingSourceModel = Habit & { events: HabitEvent[]; goals: Goal[] };
+export type TrackingSourceModel = Habit & { events: HabitEvent[] };
 export type PutTrackingEventModel = { event: HabitEvent; created: boolean };
 
 export type TrackingActionModel = {

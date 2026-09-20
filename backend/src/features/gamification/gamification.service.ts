@@ -48,7 +48,7 @@ function evaluateBuild(input: BuildCompletedGamificationInput) {
     const goal = {
       goalId: input.goalAfter.id,
       value: input.goalAfter.currentProgress,
-      target: input.goalAfter.targetStreakDays,
+      target: input.goalAfter.targetDays,
     };
     if (input.goalBefore.percentage < 50 && input.goalAfter.percentage >= 50) {
       events.push(event(GamificationEventType.GoalHalfway, GamificationLevel.Progress, goal));
@@ -58,7 +58,7 @@ function evaluateBuild(input: BuildCompletedGamificationInput) {
     }
     if (input.goalBefore.status === 'ACTIVE' && input.goalAfter.status === 'COMPLETED') {
       events.push(event(GamificationEventType.GoalCompleted, GamificationLevel.Milestone, {
-        goalId: input.goalAfter.id, target: input.goalAfter.targetStreakDays,
+        goalId: input.goalAfter.id, target: input.goalAfter.targetDays,
       }));
     }
   }

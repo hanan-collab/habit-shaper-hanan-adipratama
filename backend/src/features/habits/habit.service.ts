@@ -7,6 +7,7 @@ import { toDateOnly } from './habit.dto.js';
 import { HabitErrorCode } from './habit.enum.js';
 import { habitDetailResponse, habitResponse } from './habit.model.js';
 import type { HabitRepository } from './habit.repository.js';
+import type { GoalService } from '../goals/goal.service.js';
 
 export interface HabitService {
   list(userId: string): Promise<ReturnType<typeof habitResponse>[]>;
@@ -16,7 +17,7 @@ export interface HabitService {
     meta: { gamificationEvents: ReturnType<GamificationService['evaluate']> };
   }>;
   update(userId: string, timezone: string, habitId: string, input: UpdateHabitDto): Promise<ReturnType<typeof habitResponse>>;
-  delete(userId: string, habitId: string): Promise<void>;
+  delete(userId: string, habitId: string, timezone?: string): Promise<void>;
 }
 
 function todayIn(timezone: string) {
@@ -27,7 +28,7 @@ function todayIn(timezone: string) {
   return `${value.year}-${value.month}-${value.day}`;
 }
 
-export function createHabitService(repository: HabitRepository, gamification: GamificationService): HabitService {
+export function createHabitService(repository: HabitRepository, gamification: GamificationService, goals?: GoalService): HabitService {
   const find = async (userId: string, habitId: string) => {
     const habit = await repository.findDetail(userId, habitId);
     if (!habit) throw new AppError(404, HabitErrorCode.NotFound, 'Habit not found');
@@ -73,8 +74,9 @@ export function createHabitService(repository: HabitRepository, gamification: Ga
       };
       return habitResponse(await repository.update(habitId, data));
     },
-    async delete(userId, habitId) {
+    async delete(userId, habitId, timezone = 'UTC') {
       await find(userId, habitId);
+      await goals?.disconnectHabit(userId, timezone, habitId);
       await repository.delete(habitId);
     },
   };

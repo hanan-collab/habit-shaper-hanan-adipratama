@@ -14,7 +14,6 @@ export function createTrackingRepository(prisma: PrismaClient): TrackingReposito
         where: { id: habitId, userId },
         include: {
           events: { orderBy: { date: 'asc' } },
-          goals: { where: { activeSlot: 1 }, orderBy: { createdAt: 'asc' } },
         },
       });
     },
