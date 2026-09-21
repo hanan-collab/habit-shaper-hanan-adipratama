@@ -1,14 +1,14 @@
-import styles from './PersonalBestChip.module.css';
+import styles from './AchievementChip.module.css';
 
-export function PersonalBestChip({
-  label = 'PERSONAL BEST',
-  message = 'One more day shaped.',
+export function AchievementChip({
+  label,
+  message,
   value,
   className = '',
   onDismiss,
 }: {
-  label?: string;
-  message?: string;
+  label: string;
+  message: string;
   value?: number;
   className?: string;
   onDismiss?: () => void;
@@ -25,7 +25,7 @@ export function PersonalBestChip({
           <small>{message}</small>
         </span>
         {onDismiss && (
-          <button type="button" aria-label="Dismiss progress update" onClick={onDismiss}>
+          <button type="button" aria-label="Dismiss achievement" onClick={onDismiss}>
             ×
           </button>
         )}

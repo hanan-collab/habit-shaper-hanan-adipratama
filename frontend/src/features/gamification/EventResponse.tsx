@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { BorderBeam, Particles } from '../../components/magicui';
-import { PersonalBestChip } from '../../components/ui/PersonalBestChip';
+import { AchievementChip } from '../../components/ui/AchievementChip';
 import { useToast } from '../../components/ui/ToastProvider';
 import type { GamificationEvent } from '../../types/domain';
 import styles from './EventResponse.module.css';
@@ -30,8 +29,9 @@ export function EventResponse({ events, onDismiss }: { events: GamificationEvent
   );
   const personalBest = selected?.type === 'PERSONAL_BEST';
   const milestone = selected?.level === 'MILESTONE';
+  const showAchievementChip = milestone || personalBest;
   useEffect(() => {
-    if (!selected || !variant || milestone || personalBest) return;
+    if (!selected || !variant || showAchievementChip) return;
     const id = `${selected.type}:${selected.habitId ?? ''}:${selected.value ?? ''}`;
     if (shown.current === id) return;
     shown.current = id;
@@ -41,35 +41,21 @@ export function EventResponse({ events, onDismiss }: { events: GamificationEvent
       message: fill(variant[1], selected),
     });
     onDismiss();
-  }, [milestone, onDismiss, personalBest, pushToast, selected, variant]);
+  }, [onDismiss, pushToast, selected, showAchievementChip, variant]);
   useEffect(() => {
-    if (!personalBest) return;
+    if (!showAchievementChip) return;
     const timer = window.setTimeout(onDismiss, 4400);
     return () => window.clearTimeout(timer);
-  }, [onDismiss, personalBest]);
-  if (selected && variant && personalBest)
+  }, [onDismiss, showAchievementChip]);
+  if (selected && variant && showAchievementChip)
     return (
-      <PersonalBestChip
+      <AchievementChip
         className={styles.responseChip}
-        value={selected.value}
+        label={personalBest ? 'PERSONAL BEST' : fill(variant[0], selected)}
+        value={personalBest ? selected.value : undefined}
         message={fill(variant[1], selected)}
         onDismiss={onDismiss}
       />
     );
-  if (!selected || !variant || !milestone) return null;
-  return (
-    <div className={styles.backdrop} role="dialog" aria-modal="true">
-      <div className={styles.card}>
-        <BorderBeam color="#F8DEDB" />
-        <Particles burstKey={`${selected.type}-${selected.value ?? 0}`} />
-        <img src="/brand/motion/milestone-day-7.svg" alt="" />
-        <span>{selected.level}</span>
-        <h2>{fill(variant[0], selected)}</h2>
-        <p>{fill(variant[1], selected)}</p>
-        <button className="raisedSecondary" onClick={onDismiss}>
-          Keep shaping
-        </button>
-      </div>
-    </div>
-  );
+  return null;
 }

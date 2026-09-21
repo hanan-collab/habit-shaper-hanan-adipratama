@@ -90,6 +90,10 @@
   box-shadow: 0 4px 0 var(--deep-red-dark);
   font-weight: 700;
 }
+.today .habitAction {
+  flex: 1;
+  min-width: 0;
+}
 .passiveAction {
   border-color: #b7aaa8;
   color: var(--muted);

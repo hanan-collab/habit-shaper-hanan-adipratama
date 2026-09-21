@@ -18,4 +18,20 @@ describe('EventResponse', () => {
     expect(onDismiss).toHaveBeenCalledOnce();
     vi.useRealTimers();
   });
+
+  test('renders milestone achievements as a non-blocking chip', () => {
+    vi.useFakeTimers();
+    const onDismiss = vi.fn();
+    render(
+      <ToastProvider>
+        <EventResponse events={[{ type: 'STREAK_MILESTONE', level: 'MILESTONE', value: 7 }]} onDismiss={onDismiss} />
+      </ToastProvider>,
+    );
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('7 DAYS. BUILT.');
+    vi.advanceTimersByTime(4400);
+    expect(onDismiss).toHaveBeenCalledOnce();
+    vi.useRealTimers();
+  });
 });
