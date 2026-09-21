@@ -19,13 +19,14 @@
     "dev:frontend": "npm run dev -w frontend",
     "dev:backend": "npm run dev -w backend",
     "generate": "npm run generate -w backend",
+    "seed": "npm run seed -w backend",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "test:smoke": "node --test tests/smoke/*.test.mjs",
-    "lint": "eslint frontend/src backend/src packages/contracts tests",
-    "format": "prettier --write \"frontend/src/**/*.{ts,tsx,css}\" \"frontend/*.{ts,json}\" \"backend/src/**/*.ts\" \"backend/*.{ts,json}\" \"packages/contracts/**/*.{js,ts,json}\" \"tests/**/*.mjs\" \"*.{js,md,json}\"",
-    "format:check": "prettier --check \"frontend/src/**/*.{ts,tsx,css}\" \"frontend/*.{ts,json}\" \"backend/src/**/*.ts\" \"backend/*.{ts,json}\" \"packages/contracts/**/*.{js,ts,json}\" \"tests/**/*.mjs\" \"*.{js,md,json}\""
+    "lint": "eslint frontend/src backend/src backend/prisma packages/contracts tests",
+    "format": "prettier --write \"frontend/src/**/*.{ts,tsx,css}\" \"frontend/*.{ts,json}\" \"backend/src/**/*.ts\" \"backend/prisma/**/*.mjs\" \"backend/*.{ts,json}\" \"packages/contracts/**/*.{js,ts,json}\" \"tests/**/*.mjs\" \"*.{js,md,json}\"",
+    "format:check": "prettier --check \"frontend/src/**/*.{ts,tsx,css}\" \"frontend/*.{ts,json}\" \"backend/src/**/*.ts\" \"backend/prisma/**/*.mjs\" \"backend/*.{ts,json}\" \"packages/contracts/**/*.{js,ts,json}\" \"tests/**/*.mjs\" \"*.{js,md,json}\""
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -40,6 +40,29 @@ test('production server serves health, React assets, and page fallback', async (
   assert.deepEqual(await missing.json(), { error: 'Not found' });
 });
 
+test('startup seeds a ready-to-use demo account and sample dashboard', async () => {
+  const email = process.env.DEMO_EMAIL ?? 'demo@habit-shaper.local';
+  const password = process.env.DEMO_PASSWORD ?? 'demo-password';
+  const login = await fetch(new URL('/api/auth/login', appUrl), {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+    signal: AbortSignal.timeout(15000),
+  });
+  assert.equal(login.status, 200);
+  const cookie = login.headers.get('set-cookie').split(';', 1)[0];
+
+  const dashboard = await fetch(new URL('/api/dashboard', appUrl), {
+    headers: { cookie },
+    signal: AbortSignal.timeout(15000),
+  });
+  assert.equal(dashboard.status, 200);
+  const body = (await dashboard.json()).dashboard;
+  assert.ok(body.habits.some(({ name }) => name === 'Morning walk'));
+  assert.ok(body.habits.some(({ name }) => name === 'No late-night soda'));
+  assert.ok(body.goals.some(({ title }) => title === 'Build a steady morning'));
+});
+
 test('migration creates the domain tables and enforces one event per habit/date', async () => {
   const prisma = new PrismaClient();
   const rollback = new Error('Roll back smoke fixtures');

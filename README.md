@@ -4,20 +4,28 @@ Full-stack implementation of [plan.md](plan.md) and the Monument design handoff.
 
 ## Start with Docker
 
-Install Docker Desktop with its Linux engine running and Docker Compose v2. From the repository root, copy the environment template:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-On macOS/Linux, use `cp .env.example .env` instead. Then run:
+Install Docker Desktop with its Linux engine running and Docker Compose v2. No local Node.js or MySQL installation is required. From the repository root, run:
 
 ```sh
-docker compose build
-docker compose up --build -d --wait
+docker compose up
 ```
 
-Open <http://localhost:3000>. The default runtime contains only `app` and `db`. The app waits for MySQL readiness, automatically applies checked-in Prisma migrations, and starts Express. Failed migrations stop startup. Database data persists in a named volume. MySQL is available from the host on `127.0.0.1:3306` by default.
+Open <http://localhost:3000>. Compose builds the application image, starts MySQL, waits for database readiness, applies checked-in Prisma migrations, seeds the demo data, and starts the application. Failed migrations or seeds stop startup. Database data persists in a named volume. MySQL is available from the host on `127.0.0.1:3306` by default.
+
+The seeded account is ready to use:
+
+```text
+Email:    demo@habit-shaper.local
+Password: demo-password
+```
+
+The seed is repeatable and safe to run after the first startup. Run it manually inside the container with:
+
+```sh
+docker compose exec app npm run seed
+```
+
+To run in the background instead, use `docker compose up -d --wait`. Use `.env.example` only when you want to override the built-in development defaults.
 
 ```sh
 docker compose logs app db
@@ -67,6 +75,9 @@ This last command must fail because its application URL is deliberately unreacha
 | `BCRYPT_ROUNDS`       | `12`                       | Password hashing work factor (`10`–`15`)                           |
 | `SESSION_TTL_DAYS`    | `7`                        | Login session lifetime (`1`–`90` days)                             |
 | `COOKIE_SECURE`       | `false`                    | Send session cookies only over HTTPS; enable behind production TLS |
+| `SEED_DEMO_DATA`      | `true`                     | Run the repeatable demo seed before starting the application       |
+| `DEMO_EMAIL`          | `demo@habit-shaper.local`  | Login email created by the demo seed                               |
+| `DEMO_PASSWORD`       | `demo-password`            | Login password assigned to the demo account                        |
 | `DATABASE_URL`        | Assembled by Compose       | Prisma connection URL inside app/test containers                   |
 | `PORT`                | `3000`                     | Internal Express port                                              |
 | `APP_URL`             | `http://app:3000` in tests | Smoke-test target                                                  |

@@ -20,7 +20,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['backend/src/**/*.ts', 'tests/**/*.mjs'],
+    files: ['backend/src/**/*.ts', 'backend/prisma/**/*.mjs', 'tests/**/*.mjs'],
     languageOptions: { globals: { ...globals.node, ...globals.es2022 } },
   },
   {
