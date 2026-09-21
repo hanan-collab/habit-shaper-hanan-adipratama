@@ -124,7 +124,7 @@ export function GoalDetailPage() {
         </div>
         {goal.status === 'ACTIVE' && (
           <button
-            className="raisedSecondary"
+            className={`raisedSecondary ${styles.manageHabits}`}
             onClick={() => {
               setHabitIds(goal.habits.map((habit) => habit.id));
               setDraftHabits([]);

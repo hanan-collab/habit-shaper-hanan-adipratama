@@ -149,6 +149,9 @@
   gap: 14px;
   margin-top: 22px;
 }
+.manageHabits {
+  margin-top: 24px;
+}
 @media (max-width: 760px) {
   .header {
     align-items: start;
