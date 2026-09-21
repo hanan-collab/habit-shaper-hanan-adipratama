@@ -1,6 +1,7 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import path from 'node:path';
+import swaggerUi from 'swagger-ui-dist';
 import { AppError } from './common/app-error.js';
 import { createAuthRoute } from './features/auth/auth.route.js';
 import type { AuthService } from './features/auth/auth.service.js';
@@ -20,6 +21,7 @@ import type { CompositionService } from './features/composition/composition.serv
 import { createExportRoute } from './features/export/export.route.js';
 import type { ExportService } from './features/export/export.service.js';
 import { requestContext } from './middleware/request-context.js';
+import { openApiDocument } from './docs/openapi.js';
 
 type BaseAppOptions = {
   healthService: HealthService;
@@ -47,6 +49,36 @@ export function createApp(options: AppOptions) {
   app.use(requestContext);
   app.use(express.json({ limit: '32kb' }));
   app.use(cookieParser());
+  app.get('/api/openapi.json', (_request, response) => response.json(openApiDocument));
+  app.get('/api/docs', (request, response) => {
+    if (!request.originalUrl.endsWith('/')) {
+      response.redirect(308, '/api/docs/');
+      return;
+    }
+    response.type('html').send(`<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Habit Shaper API</title>
+    <link rel="stylesheet" href="./swagger-ui.css" />
+  </head>
+  <body>
+    <div id="swagger-ui"></div>
+    <script src="./swagger-ui-bundle.js"></script>
+    <script>
+      window.ui = SwaggerUIBundle({
+        url: '/api/openapi.json',
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        displayRequestDuration: true,
+        tryItOutEnabled: true
+      });
+    </script>
+  </body>
+</html>`);
+  });
+  app.use('/api/docs', express.static(swaggerUi.getAbsoluteFSPath(), { index: false }));
   app.use('/api/health', createHealthRoute(options.healthService));
   if ('authService' in options && options.authService) {
     app.use('/api/auth', createAuthRoute(options.authService, { cookieSecure: options.cookieSecure ?? false }));

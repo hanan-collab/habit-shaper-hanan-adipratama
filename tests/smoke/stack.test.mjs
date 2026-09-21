@@ -22,6 +22,17 @@ test('production server serves health, React assets, and page fallback', async (
   const health = await get('/api/health');
   assert.equal(health.status, 200);
   assert.deepEqual(await health.json(), { status: 'ok', database: 'up' });
+  const openApi = await get('/api/openapi.json');
+  assert.equal(openApi.status, 200);
+  const specification = await openApi.json();
+  assert.equal(specification.openapi, '3.1.0');
+  assert.equal(specification.components.securitySchemes.cookieAuth.name, 'habit_session');
+  assert.ok(specification.paths['/api/habits'].post);
+  const docs = await get('/api/docs/');
+  assert.equal(docs.status, 200);
+  assert.match(await docs.text(), /SwaggerUIBundle/);
+  const swaggerCss = await get('/api/docs/swagger-ui.css');
+  assert.equal(swaggerCss.status, 200);
   const home = await get('/');
   assert.equal(home.status, 200);
   const html = await home.text();

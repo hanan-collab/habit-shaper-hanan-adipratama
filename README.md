@@ -1,185 +1,340 @@
 # Habit Shaper
 
-Full-stack implementation of [plan.md](plan.md) and the Monument design handoff. React + Vite + TypeScript live in `frontend/`; Express + TypeScript + Prisma live in `backend/`. MySQL 8.4 supplies the database. Express serves the React production build and `/api` on one origin; no Nginx or CORS configuration is needed.
+Shaping is hard. Habit Shaper helps you make it 1% better every day by turning small actions into visible progress. Build what helps, break what holds you back, and keep moving without losing the work you already did.
 
-## Start with Docker
-
-Install Docker Desktop with its Linux engine running and Docker Compose v2. No local Node.js or MySQL installation is required. From the repository root, run:
+## Quick start
 
 ```sh
 docker compose up
 ```
 
-Open <http://localhost:3000>. Compose builds the application image, starts MySQL, waits for database readiness, applies checked-in Prisma migrations, seeds the demo data, and starts the application. Failed migrations or seeds stop startup. Database data persists in a named volume. MySQL is available from the host on `127.0.0.1:3306` by default.
+| Open         | URL                                      |
+| ------------ | ---------------------------------------- |
+| Application  | <http://localhost:3000>                  |
+| Swagger UI   | <http://localhost:3000/api/docs>         |
+| OpenAPI JSON | <http://localhost:3000/api/openapi.json> |
+| Health check | <http://localhost:3000/api/health>       |
 
-The seeded account is ready to use:
+Use the seeded account:
 
-```text
-Email:    demo@habit-shaper.local
-Password: demo-password
+| Field    | Value                     |
+| -------- | ------------------------- |
+| Email    | `demo@habit-shaper.local` |
+| Password | `demo-password`           |
+
+### Seed data
+
+The demo seed runs automatically when the app container starts. It is repeatable, so running it again updates the demo account without duplicating its records.
+
+| Task                         | Command                                                            |
+| ---------------------------- | ------------------------------------------------------------------ |
+| Run seed manually            | `docker compose exec app npm run seed`                             |
+| Start without automatic seed | Set `SEED_DEMO_DATA=false` in `.env`, then run `docker compose up` |
+| Reset all local data         | `docker compose down -v` then `docker compose up`                  |
+| Override demo login          | Set `DEMO_EMAIL` and `DEMO_PASSWORD` in `.env`                     |
+
+`docker compose down -v` permanently removes the local database volume.
+
+## Showcase
+
+| Feature      | Preview                                                                                 |
+| ------------ | --------------------------------------------------------------------------------------- |
+| Landing      | ![Habit Shaper landing page](docs/readme/showcase/landing.png)                          |
+| Today        | ![Today dashboard with daily habit actions](docs/readme/showcase/today.png)             |
+| Habits       | ![Build and break habit library](docs/readme/showcase/habits.png)                       |
+| Habit detail | ![Habit detail with history and connected goals](docs/readme/showcase/habit-detail.png) |
+| Create habit | ![Habit composer with a staged goal preview](docs/readme/showcase/habit-composer.png)   |
+| Goals        | ![Goal library and progress](docs/readme/showcase/goals.png)                            |
+| Goal detail  | ![Goal detail with connected habits](docs/readme/showcase/goal-detail.png)              |
+| Statistics   | ![Habit statistics and progress history](docs/readme/showcase/statistics.png)           |
+| Settings     | ![Profile, timezone, export, and account settings](docs/readme/showcase/settings.png)   |
+
+## Features
+
+| Feature           | What it does                                             | Why it matters                                 |
+| ----------------- | -------------------------------------------------------- | ---------------------------------------------- |
+| Build habits      | Records positive actions as daily completions            | Makes consistency visible                      |
+| Break habits      | Records relapses and clean-day recovery                  | Keeps setbacks useful instead of destructive   |
+| Today dashboard   | Places every daily action and active goal in one view    | Reduces the work needed to check in            |
+| Habit composer    | Stages existing and new goals before one atomic save     | Prevents partial habit and goal data           |
+| Goal composer     | Stages existing and new habits before one atomic save    | Keeps goal setup predictable                   |
+| Goal progress     | Derives progress from connected habit activity           | Connects daily action to a clear target        |
+| Statistics        | Shows streaks, weekly rates, totals, and relapse history | Turns activity into feedback                   |
+| Achievement chips | Shows concise feedback after meaningful events           | Rewards progress without blocking the workflow |
+| Data export       | Downloads account, habit, event, and goal data           | Keeps user data portable                       |
+| Timezone support  | Evaluates local dates using the account timezone         | Keeps daily tracking accurate                  |
+
+### Gamification events
+
+| Event                 | Trigger                                     | Level     | UI response        |
+| --------------------- | ------------------------------------------- | --------- | ------------------ |
+| `HABIT_CREATED`       | A habit is created                          | Micro     | Creation chip      |
+| `FIRST_CHECK_IN`      | First build completion                      | Progress  | Progress chip      |
+| `DAILY_COMPLETION`    | A build habit is completed                  | Micro     | Completion chip    |
+| `STREAK_STARTED`      | A new sequence begins                       | Progress  | Progress chip      |
+| `STREAK_MILESTONE`    | 3, 7, 14, 30, 60, or 100 days               | Milestone | Milestone chip     |
+| `PERSONAL_BEST`       | A previous best is exceeded                 | Milestone | Personal best chip |
+| `GOAL_HALFWAY`        | Goal reaches 50 percent                     | Progress  | Goal chip          |
+| `GOAL_NEARLY_REACHED` | Goal is close to its target                 | Progress  | Goal chip          |
+| `GOAL_COMPLETED`      | Goal target is reached                      | Milestone | Completion chip    |
+| `PERFECT_WEEK`        | Every eligible day is completed             | Milestone | Weekly chip        |
+| `RELAPSE_RECORDED`    | A break habit relapse is recorded           | Recovery  | Recovery chip      |
+| `COMEBACK`            | A build habit resumes after at least 3 days | Recovery  | Comeback chip      |
+
+## Architecture
+
+```mermaid
+flowchart LR
+    B[Browser] --> V[React views]
+    V --> C[Hooks and form controllers]
+    C --> M[Feature API and query models]
+    M -->|JSON and session cookie| R[Express routes]
+    R --> BC[Controllers]
+    BC --> S[Services and use cases]
+    S --> U[Unit of work]
+    U --> RP[Repositories]
+    RP --> P[Prisma]
+    P --> DB[(MySQL)]
+    DB --> P --> RP --> S --> BC --> M --> V
 ```
 
-The seed is repeatable and safe to run after the first startup. Run it manually inside the container with:
+| Layer                                       | MVC role      | Responsibility                                        |
+| ------------------------------------------- | ------------- | ----------------------------------------------------- |
+| React pages and components                  | View          | Render state, forms, feedback, and navigation         |
+| Hooks, forms, and query mutations           | Controller    | Translate user actions into validated operations      |
+| Domain types, API adapters, and query cache | Model         | Represent frontend data and server state              |
+| Express routes and controllers              | Controller    | Authenticate, validate, and map HTTP input and output |
+| Services and use cases                      | Model         | Apply business rules and transaction boundaries       |
+| Repositories and Prisma                     | Model         | Isolate persistence and ownership-scoped queries      |
+| Shared request and response contracts       | Communication | Keep frontend and backend payloads aligned            |
 
-```sh
-docker compose exec app npm run seed
+Habit and goal composition writes run in one Prisma transaction. A failed root write, draft creation, connection update, disconnection, or progress reconciliation rolls back the full operation.
+
+## Design philosophy
+
+![Small actions. Visible progress.](docs/readme/design-philosophy.svg)
+
+| Principle                   | Product rule                                                            |
+| --------------------------- | ----------------------------------------------------------------------- |
+| Momentum over pressure      | Make the next useful action obvious and small                           |
+| Recovery is data            | Preserve history and use relapse information to guide recovery          |
+| Interaction earns elevation | Use borders, shadows, and motion only when they clarify action or state |
+| Progress stays visible      | Put current state, next action, and long-term direction together        |
+| Feedback stays lightweight  | Use chips for achievements instead of blocking overlays                 |
+
+## Tech stack
+
+| Technology       | Role                 | Why it is used                                               |
+| ---------------- | -------------------- | ------------------------------------------------------------ |
+| React 19         | User interface       | Composable feature views and predictable rendering           |
+| TypeScript 5.9   | Application language | Shared, checked contracts across the stack                   |
+| Vite 7           | Frontend tooling     | Fast development and production bundling                     |
+| React Router 7   | Navigation           | Nested protected routes and lazy feature boundaries          |
+| TanStack Query 5 | Server state         | Cache, invalidation, loading, and retry behavior             |
+| React Hook Form  | Form state           | Small rerender surface for validated forms                   |
+| Zod 4            | Runtime validation   | One source for API and form constraints                      |
+| Motion           | UI feedback          | Focused transitions and progress feedback                    |
+| Express 5        | HTTP server          | Routes, middleware, cookies, and frontend delivery           |
+| Prisma 6.19      | Data access          | Typed queries, migrations, and atomic transactions           |
+| MySQL 8.4        | Database             | Relational ownership, history, and progress data             |
+| OpenAPI 3.1      | API contract         | Machine-readable endpoint documentation                      |
+| Swagger UI       | API explorer         | Browser-based request and response inspection                |
+| Vitest           | Test runner          | Unit and integration tests across workspaces                 |
+| Testing Library  | Frontend tests       | User-focused component behavior                              |
+| Supertest        | Backend tests        | HTTP behavior without a separate test server                 |
+| Docker Compose   | Runtime setup        | Starts the application and database from the repository root |
+
+## Database model
+
+```mermaid
+erDiagram
+    User ||--o{ Session : owns
+    User ||--o{ Habit : owns
+    User ||--o{ Goal : owns
+    Habit ||--o{ HabitEvent : records
+    Habit ||--o{ GoalHabit : connects
+    Goal ||--o{ GoalHabit : connects
+    Goal ||--o{ GoalProgressDay : earns
+
+    User {
+      string id PK
+      string email UK
+      string timezone
+      boolean onboardingCompleted
+    }
+    Session {
+      string id PK
+      string userId FK
+      string tokenHash UK
+      datetime expiresAt
+    }
+    Habit {
+      string id PK
+      string userId FK
+      enum type
+      date startDate
+    }
+    HabitEvent {
+      string id PK
+      string habitId FK
+      enum type
+      date date
+      string note
+    }
+    Goal {
+      string id PK
+      string userId FK
+      enum status
+      int targetDays
+      date deadline
+    }
+    GoalHabit {
+      string id PK
+      string goalId FK
+      string habitId FK
+      date connectedOn
+      date disconnectedOn
+    }
+    GoalProgressDay {
+      string id PK
+      string goalId FK
+      date date UK
+    }
 ```
 
-To run in the background instead, use `docker compose up -d --wait`. Use `.env.example` only when you want to override the built-in development defaults.
+| Model             | Stores                                                  |
+| ----------------- | ------------------------------------------------------- |
+| `User`            | Login identity, profile, timezone, and onboarding state |
+| `Session`         | Hashed opaque login tokens and expiry                   |
+| `Habit`           | Build or break habit definition                         |
+| `HabitEvent`      | Completion or relapse on one local calendar date        |
+| `Goal`            | Target, deadline, status, and final progress            |
+| `GoalHabit`       | Time-aware habit and goal connections                   |
+| `GoalProgressDay` | Reconciled days that count toward a goal                |
 
-```sh
-docker compose logs app db
-docker compose down
+## User flow
+
+```mermaid
+flowchart TD
+    A[Register or log in] --> B{Onboarding complete?}
+    B -- No --> C[Choose timezone and first habit]
+    B -- Yes --> D[Today]
+    C --> D
+    D --> E[Complete build habit]
+    D --> F[Record break habit relapse]
+    D --> G[Review active goals]
+    E --> H[Update statistics and goal progress]
+    F --> I[Start recovery from recorded data]
+    G --> J[Create or edit staged connections]
+    H --> K[Review statistics]
+    I --> K
+    J --> D
+    D --> L[Settings and data export]
 ```
 
-`down` preserves database data. Changing initial MySQL credentials in `.env` does not modify an existing database volume.
+| Stage    | Main action                                    | Result                                 |
+| -------- | ---------------------------------------------- | -------------------------------------- |
+| Start    | Register, log in, and set timezone             | Local calendar behavior is established |
+| Shape    | Create build or break habits and connect goals | The daily plan is ready                |
+| Check in | Complete or record a relapse from Today        | History and progress update together   |
+| Recover  | Review relapse context and continue            | Previous work remains visible          |
+| Review   | Open goals and statistics                      | Progress informs the next change       |
 
-## Build and test artifacts
+## API documentation
 
-The root Dockerfile has dependency, frontend-build, backend-build, test, and production stages. Production contains compiled application assets, production dependencies, and Prisma migration tooling. Generated `frontend/dist/`, `backend/dist/`, and `node_modules/` stay out of version control; commit `package-lock.json` and migrations.
+| Artifact        | Location                                 | Use                                      |
+| --------------- | ---------------------------------------- | ---------------------------------------- |
+| Swagger UI      | <http://localhost:3000/api/docs>         | Explore endpoints and send requests      |
+| OpenAPI JSON    | <http://localhost:3000/api/openapi.json> | Generate clients or inspect the contract |
+| Health endpoint | <http://localhost:3000/api/health>       | Check application and database readiness |
 
-Run the full test workflow after startup:
+Swagger is public, but protected operations still require the `habit_session` cookie. Log in through `POST /api/auth/login` in Swagger before trying protected endpoints.
 
-```sh
-docker compose --profile test run --build --rm test
-```
+## Security
 
-The optional test service runs TypeScript checks, Vitest/React Testing Library/Supertest tests, and stack smoke tests. It returns a nonzero exit code on failure. Smoke tests exercise the production HTML/JavaScript, every API feature, all five database models, migrations, ownership, event rules, and active-goal uniqueness. Test users and their dependent records are removed afterward.
+| Control          | Implementation                                             |
+| ---------------- | ---------------------------------------------------------- |
+| Password storage | bcrypt with configurable work factor                       |
+| Sessions         | Opaque random token; only its SHA-256 hash is stored       |
+| Cookie           | `HttpOnly`, `SameSite=Lax`, and configurable `Secure`      |
+| Login protection | Rate limits on registration and login                      |
+| Input validation | Strict Zod schemas for body and path data                  |
+| Request limit    | JSON body capped at 32 KB                                  |
+| Authorization    | Every resource lookup is scoped to the authenticated owner |
+| Atomic writes    | Prisma transactions roll back incomplete compositions      |
+| Error output     | Structured public errors without database detail           |
+| Observability    | Request IDs and structured server errors                   |
 
-To verify migration redeployment and persistence:
-
-```sh
-docker compose restart app
-docker compose up -d --wait
-docker compose --profile test run --rm test
-```
-
-To exercise the test runner's failure exit status without changing files:
-
-```sh
-docker compose --profile test run --rm -e APP_URL=http://127.0.0.1:1 test npm run test:smoke
-```
-
-This last command must fail because its application URL is deliberately unreachable.
+The defaults in `.env.example` are for local use. Replace credentials for a shared environment and never commit `.env`.
 
 ## Environment
 
-| Variable              | Default                    | Purpose                                                            |
-| --------------------- | -------------------------- | ------------------------------------------------------------------ |
-| `APP_PORT`            | `3000`                     | Host HTTP port                                                     |
-| `MYSQL_PORT`          | `3306`                     | MySQL port published on the host                                   |
-| `MYSQL_DATABASE`      | `habit_shaper`             | Initial database                                                   |
-| `MYSQL_USER`          | `habit_shaper`             | Application database user                                          |
-| `MYSQL_PASSWORD`      | `scaffold_password`        | Local development password                                         |
-| `MYSQL_ROOT_PASSWORD` | `scaffold_root_password`   | MySQL initialization password                                      |
-| `BCRYPT_ROUNDS`       | `12`                       | Password hashing work factor (`10`–`15`)                           |
-| `SESSION_TTL_DAYS`    | `7`                        | Login session lifetime (`1`–`90` days)                             |
-| `COOKIE_SECURE`       | `false`                    | Send session cookies only over HTTPS; enable behind production TLS |
-| `SEED_DEMO_DATA`      | `true`                     | Run the repeatable demo seed before starting the application       |
-| `DEMO_EMAIL`          | `demo@habit-shaper.local`  | Login email created by the demo seed                               |
-| `DEMO_PASSWORD`       | `demo-password`            | Login password assigned to the demo account                        |
-| `DATABASE_URL`        | Assembled by Compose       | Prisma connection URL inside app/test containers                   |
-| `PORT`                | `3000`                     | Internal Express port                                              |
-| `APP_URL`             | `http://app:3000` in tests | Smoke-test target                                                  |
+| Variable              | Default                   | Purpose                                    |
+| --------------------- | ------------------------- | ------------------------------------------ |
+| `APP_PORT`            | `3000`                    | Host HTTP port                             |
+| `MYSQL_PORT`          | `3306`                    | Host MySQL port                            |
+| `MYSQL_DATABASE`      | `habit_shaper`            | Initial database name                      |
+| `MYSQL_USER`          | `habit_shaper`            | Application database user                  |
+| `MYSQL_PASSWORD`      | `scaffold_password`       | Local database password                    |
+| `MYSQL_ROOT_PASSWORD` | `scaffold_root_password`  | Local root password                        |
+| `BCRYPT_ROUNDS`       | `12`                      | Password hashing work factor from 10 to 15 |
+| `SESSION_TTL_DAYS`    | `7`                       | Login lifetime from 1 to 90 days           |
+| `COOKIE_SECURE`       | `false`                   | Require HTTPS for the session cookie       |
+| `SEED_DEMO_DATA`      | `true`                    | Run the demo seed at container startup     |
+| `DEMO_EMAIL`          | `demo@habit-shaper.local` | Seeded login email                         |
+| `DEMO_PASSWORD`       | `demo-password`           | Seeded login password                      |
 
-The example values are public local-development defaults, not real secrets. Replace them for shared deployments. Keep database identifiers and credentials URL-safe because Compose interpolates them into `DATABASE_URL`. Do not commit `.env`.
+## Quality gates
 
-## Local development
+| Check                       | Command                                               |
+| --------------------------- | ----------------------------------------------------- |
+| TypeScript                  | `npm run typecheck`                                   |
+| Lint                        | `npm run lint`                                        |
+| Formatting                  | `npm run format:check`                                |
+| Unit and integration tests  | `npm test`                                            |
+| Production build            | `npm run build`                                       |
+| Full container test profile | `docker compose --profile test run --build --rm test` |
+| Stack readiness             | `docker compose up -d --build --wait`                 |
+| Health response             | `curl http://localhost:3000/api/health`               |
 
-Use Node.js 22.12+ and npm. Containers use Node.js 22. The lockfile pins resolved dependencies; Prisma CLI/client are intentionally matched at version 6.19.0 with the Prisma 6 MySQL schema/generator configuration.
+## Project map
 
-Root dependency overrides update Prisma's configuration dependencies (`deepmerge-ts` and `effect`) to patched versions. Keep these overrides until an upstream Prisma update incorporates the fixes; validate client generation and migration deployment when updating them.
+| Path                      | Contains                                              |
+| ------------------------- | ----------------------------------------------------- |
+| `frontend/src/features`   | Feature views, forms, queries, and UI controllers     |
+| `frontend/src/components` | Shared layout and interface components                |
+| `backend/src/features`    | Routes, controllers, services, repositories, and DTOs |
+| `backend/src/docs`        | Generated OpenAPI registry and response schemas       |
+| `backend/prisma`          | Database schema, migrations, and demo seed            |
+| `packages/contracts`      | Shared request and response TypeScript contracts      |
+| `tests/smoke`             | Production stack smoke tests                          |
+| `docs/readme`             | README screenshots and design assets                  |
 
-```sh
-npm ci
-npm run generate
-npm run typecheck
-npm run build
-npm test
-npm run dev:frontend
-```
+## Common operations
 
-For local backend development, set `DATABASE_URL` in your shell to the Compose database at `127.0.0.1:3306`, apply `npm run migrate:deploy --workspace backend`, then run `npm run dev:backend` in another terminal. Vite proxies `/api` to `http://localhost:3000`. The backend does not automatically load the root `.env`; Docker Compose supplies its environment.
+| Task                       | Command                                |
+| -------------------------- | -------------------------------------- |
+| Start and rebuild          | `docker compose up --build`            |
+| Start in background        | `docker compose up -d --build --wait`  |
+| Follow logs                | `docker compose logs -f app db`        |
+| Restart the app            | `docker compose restart app`           |
+| Run demo seed              | `docker compose exec app npm run seed` |
+| Stop services              | `docker compose down`                  |
+| Stop and delete local data | `docker compose down -v`               |
 
-## Structure and implementation boundary
+## Glossary
 
-- Frontend: feature pages cover landing, authentication, onboarding, dashboard, habits, goals, statistics, settings, gamification responses, and the public Brand Kit. React Router owns lazy route boundaries, TanStack Query owns server state through centralized query keys, React Hook Form and Zod own form validation, and CSS Modules implement the responsive Monument design system. API adapters depend on request/response contracts rather than UI components.
-- Backend: each feature uses `route → controller → application service/use case → repository → Prisma → MySQL`. Request schemas and response contracts live in separate `dto/request` and `dto/response` boundaries. Multi-entity composition runs through an explicit unit of work, while repositories isolate database queries.
-- Database: `User`, `Session`, `Habit`, `HabitEvent`, and `Goal`, UUID IDs, enum fields, foreign keys with dependent-row cascade deletion, unique email, unique session-token hash, and unique habit/date events. Calendar dates use MySQL `DATE`; audit timestamps use `DATETIME(3)`. Optional fields are nullable and goals default to `ACTIVE`.
-- Runtime: the backend implements health, authentication/onboarding, habit management, tracking, streak statistics, goals, stateless gamification events, derived user statistics, and dashboard aggregation. Unknown API paths return JSON `404`; browser page routes serve the React shell.
-
-Protected `/app/*` routes require a valid database session and completed onboarding. The public homepage, authentication, onboarding, and `/brand-kit` routes remain accessible outside the product shell.
-
-## Authentication API
-
-Authentication uses an opaque `habit_session` cookie. Passwords are hashed with bcrypt. Session tokens are generated with a cryptographically secure random source, while only their SHA-256 hashes are stored in MySQL. Logout deletes the current database session immediately. Login errors never reveal whether an email exists, and register/login endpoints are rate limited per IP.
-
-```text
-POST  /api/auth/register    { email, password, timezone }
-POST  /api/auth/login       { email, password }
-POST  /api/auth/logout
-GET   /api/auth/me
-PATCH /api/auth/onboarding  { completed: true }
-```
-
-Use a cookie jar when testing manually:
-
-```sh
-curl -i -c cookies.txt -H "Content-Type: application/json" -d '{"email":"user@example.com","password":"correct horse battery staple","timezone":"Asia/Jakarta"}' http://localhost:3000/api/auth/register
-curl -i -b cookies.txt http://localhost:3000/api/auth/me
-curl -i -b cookies.txt -X PATCH -H "Content-Type: application/json" -d '{"completed":true}' http://localhost:3000/api/auth/onboarding
-curl -i -b cookies.txt -c cookies.txt -X POST http://localhost:3000/api/auth/logout
-```
-
-## Habit, statistics, goal, and dashboard APIs
-
-All endpoints below require the `habit_session` cookie:
-
-```text
-GET    /api/habits
-POST   /api/habits                              { name, description?, type, goalIds?, newGoals? }
-GET    /api/habits/:habitId
-PATCH  /api/habits/:habitId                     { name?, description? }
-PATCH  /api/habits/:habitId/goals               { goalIds, newGoals }
-DELETE /api/habits/:habitId
-
-PUT    /api/habits/:habitId/completions/:date   { note? }
-DELETE /api/habits/:habitId/completions/:date
-PUT    /api/habits/:habitId/relapses/:date      { note? }
-DELETE /api/habits/:habitId/relapses/:date
-GET    /api/habits/:habitId/statistics
-GET    /api/statistics
-
-GET    /api/goals
-POST   /api/goals                                { title, targetDays, deadline?, habitIds, newHabits? }
-POST   /api/habits/:habitId/goals               { title, targetDays, deadline? }
-PATCH  /api/goals/:goalId                       { title?, targetDays?, deadline?, habitIds?, newHabits? }
-DELETE /api/goals/:goalId
-POST   /api/goals/:goalId/cancel
-
-GET    /api/dashboard
-GET    /api/export
-```
-
-Creating a habit returns `meta.gamificationEvents` with `HABIT_CREATED`. Completion and relapse PUT responses use this shape:
-
-```json
-{
-  "data": { "event": {}, "stats": {}, "goal": null },
-  "meta": { "gamificationEvents": [] }
-}
-```
-
-Gamification events contain only semantic `type`, `level`, identifiers, and numeric context. UI copy and animation remain frontend concerns. Repeating an existing PUT updates its optional note and returns an empty event list. Deleting or correcting a tracking record does not emit a celebration.
-
-Dashboard responses include derived `userStatistics`: `totalBuildCompletions`, `totalGoalsCompleted`, `bestBuildStreak`, `bestBreakStreak`, and `bestOverallStreak`. These values are calculated from current habit events and goals and are not persisted.
-
-Dates use `YYYY-MM-DD`. Habit start dates and events cannot be in the future in the user's stored timezone. BUILD habits accept only completion events; BREAK habits accept only relapse events. PUT event operations are idempotent, and all resource lookup is scoped to the authenticated user.
-
-## Streak behavior
-
-BUILD current streak counts consecutive completion events ending today or yesterday when today is still open. BREAK current streak counts clean days since the most recent relapse, with a relapse today producing a streak of zero. Weekly statistics cover Monday through today in the user's timezone and begin no earlier than the habit start date. Statistics include completion totals, eligible weekly days, missed days, completion rate, and last relapse date. Calculated statistics, user statistics, gamification state, and goal progress are not stored as columns.
-
-Goals require a positive day target and at least one connected habit. Goal and dashboard reads use a read-only progress projection; tracking and composition commands persist reconciliation atomically. Deadlines cannot be created or changed to a past date, and overdue state is calculated for active goals.
-
-Feature implementation should use meaningful incremental commits as requested in `plan.md`.
+| Artifact         | Description                                | How to use it                                   |
+| ---------------- | ------------------------------------------ | ----------------------------------------------- |
+| Build habit      | A positive action to repeat                | Mark it complete on an eligible day             |
+| Break habit      | A behavior to reduce or stop               | Record a relapse with an optional reason        |
+| Relapse          | A dated break-habit event                  | Use its context to plan recovery                |
+| Goal             | A target number of successful days         | Connect one or more habits and track progress   |
+| Composer         | A staged relationship editor               | Add, remove, or draft items, then save once     |
+| Habit event      | A completion or relapse record             | Drives statistics and goal reconciliation       |
+| Progress day     | A date earned by all connected habit rules | Counts toward an active goal                    |
+| Achievement chip | Small event feedback                       | Confirms progress without interrupting the page |
+| Demo seed        | Repeatable sample account and data         | Run automatically or with `npm run seed`        |
+| OpenAPI spec     | Machine-readable HTTP contract             | Open `/api/openapi.json` or feed it to tooling  |
+| Swagger UI       | Interactive API documentation              | Open `/api/docs`, log in, and try endpoints     |
+| Data export      | JSON snapshot of owned records             | Download it from Settings or `GET /api/export`  |
