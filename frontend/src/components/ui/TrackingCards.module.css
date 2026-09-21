@@ -90,8 +90,15 @@
   box-shadow: 0 4px 0 var(--deep-red-dark);
   font-weight: 700;
 }
+.today .cardActions {
+  align-items: stretch;
+  flex-direction: column;
+}
+.today .detailLink {
+  align-self: flex-start;
+}
 .today .habitAction {
-  flex: 1;
+  width: 100%;
   min-width: 0;
 }
 .passiveAction {
