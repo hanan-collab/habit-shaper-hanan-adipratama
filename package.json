@@ -1,15 +1,39 @@
 {
-  "name": "habit-shaper", "private": true, "version": "0.1.0",
-  "workspaces": ["frontend", "backend"],
-  "engines": {"node": ">=22.12.0"},
-  "overrides": {"deepmerge-ts": "^8.0.0", "effect": "^3.20.0"},
+  "name": "habit-shaper",
+  "type": "module",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "frontend",
+    "backend",
+    "packages/contracts"
+  ],
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "overrides": {
+    "deepmerge-ts": "^8.0.0",
+    "effect": "^3.20.0"
+  },
   "scripts": {
     "dev:frontend": "npm run dev -w frontend",
     "dev:backend": "npm run dev -w backend",
     "generate": "npm run generate -w backend",
-    "typecheck": "npm run typecheck --workspaces",
-    "build": "npm run build --workspaces",
-    "test": "npm run test --workspaces",
-    "test:smoke": "node --test tests/smoke/*.test.mjs"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "test:smoke": "node --test tests/smoke/*.test.mjs",
+    "lint": "eslint frontend/src backend/src packages/contracts tests",
+    "format": "prettier --write \"frontend/src/**/*.{ts,tsx,css}\" \"frontend/*.{ts,json}\" \"backend/src/**/*.ts\" \"backend/*.{ts,json}\" \"packages/contracts/**/*.{js,ts,json}\" \"tests/**/*.mjs\" \"*.{js,md,json}\"",
+    "format:check": "prettier --check \"frontend/src/**/*.{ts,tsx,css}\" \"frontend/*.{ts,json}\" \"backend/src/**/*.ts\" \"backend/*.{ts,json}\" \"packages/contracts/**/*.{js,ts,json}\" \"tests/**/*.mjs\" \"*.{js,md,json}\""
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.11.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.8",
+    "typescript-eslint": "^8.70.0"
   }
 }

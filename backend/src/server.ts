@@ -11,6 +11,7 @@ import { createStatisticsRepository } from './features/statistics/statistics.rep
 import { createStatisticsService } from './features/statistics/statistics.service.js';
 import { createGoalRepository } from './features/goals/goal.repository.js';
 import { createGoalService } from './features/goals/goal.service.js';
+import { createGoalReconciliationJob } from './features/goals/goal-reconciliation.job.js';
 import { createDashboardRepository } from './features/dashboard/dashboard.repository.js';
 import { createDashboardService } from './features/dashboard/dashboard.service.js';
 import { createGamificationService } from './features/gamification/gamification.service.js';
@@ -18,7 +19,10 @@ import { createTrackingRepository } from './features/tracking/tracking.repositor
 import { createTrackingService } from './features/tracking/tracking.service.js';
 import { createUserStatisticsService } from './features/user-statistics/user-statistics.service.js';
 import { prisma } from './lib/prisma.js';
+import { createPrismaUnitOfWork } from './lib/unit-of-work.js';
 import { createCompositionService } from './features/composition/composition.service.js';
+import { createExportRepository } from './features/export/export.repository.js';
+import { createExportService } from './features/export/export.service.js';
 
 const authRepository = createAuthRepository(prisma);
 const authService = createAuthService(authRepository, {
@@ -29,13 +33,20 @@ const healthService = createHealthService(createHealthRepository(() => prisma.$q
 const statisticsService = createStatisticsService(createStatisticsRepository(prisma));
 const gamificationService = createGamificationService();
 const goalService = createGoalService(createGoalRepository(prisma));
-const habitService = createHabitService(createHabitRepository(prisma), gamificationService, goalService);
-const compositionService = createCompositionService(prisma, gamificationService);
+const habitService = createHabitService(createHabitRepository(prisma), gamificationService);
+const compositionService = createCompositionService(createPrismaUnitOfWork(prisma), gamificationService);
+const exportService = createExportService(createExportRepository(prisma));
 const trackingService = createTrackingService(
-  createTrackingRepository(prisma), statisticsService, goalService, gamificationService,
+  createTrackingRepository(prisma),
+  statisticsService,
+  goalService,
+  gamificationService,
 );
 const dashboardService = createDashboardService(
-  createDashboardRepository(prisma), statisticsService, goalService, createUserStatisticsService(),
+  createDashboardRepository(prisma),
+  statisticsService,
+  goalService,
+  createUserStatisticsService(),
 );
 const app = createApp({
   healthService,
@@ -46,14 +57,22 @@ const app = createApp({
   dashboardService,
   trackingService,
   compositionService,
+  exportService,
   cookieSecure: env.COOKIE_SECURE,
   frontendDirectory: fileURLToPath(new URL('../../frontend/dist/', import.meta.url)),
 });
+const stopGoalReconciliation = createGoalReconciliationJob(prisma).start();
 const server = app.listen(env.PORT, '0.0.0.0', () => console.log(`Habit Shaper listening on ${env.PORT}`));
 
 for (const signal of ['SIGTERM', 'SIGINT'] as const) {
   process.once(signal, () => {
+    stopGoalReconciliation();
     const timeout = setTimeout(() => process.exit(1), 10000).unref();
-    server.close(() => { void prisma.$disconnect().finally(() => { clearTimeout(timeout); process.exit(0); }); });
+    server.close(() => {
+      void prisma.$disconnect().finally(() => {
+        clearTimeout(timeout);
+        process.exit(0);
+      });
+    });
   });
 }

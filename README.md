@@ -56,20 +56,20 @@ This last command must fail because its application URL is deliberately unreacha
 
 ## Environment
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `APP_PORT` | `3000` | Host HTTP port |
-| `MYSQL_PORT` | `3306` | MySQL port published on the host |
-| `MYSQL_DATABASE` | `habit_shaper` | Initial database |
-| `MYSQL_USER` | `habit_shaper` | Application database user |
-| `MYSQL_PASSWORD` | `scaffold_password` | Local development password |
-| `MYSQL_ROOT_PASSWORD` | `scaffold_root_password` | MySQL initialization password |
-| `BCRYPT_ROUNDS` | `12` | Password hashing work factor (`10`–`15`) |
-| `SESSION_TTL_DAYS` | `7` | Login session lifetime (`1`–`90` days) |
-| `COOKIE_SECURE` | `false` | Send session cookies only over HTTPS; enable behind production TLS |
-| `DATABASE_URL` | Assembled by Compose | Prisma connection URL inside app/test containers |
-| `PORT` | `3000` | Internal Express port |
-| `APP_URL` | `http://app:3000` in tests | Smoke-test target |
+| Variable              | Default                    | Purpose                                                            |
+| --------------------- | -------------------------- | ------------------------------------------------------------------ |
+| `APP_PORT`            | `3000`                     | Host HTTP port                                                     |
+| `MYSQL_PORT`          | `3306`                     | MySQL port published on the host                                   |
+| `MYSQL_DATABASE`      | `habit_shaper`             | Initial database                                                   |
+| `MYSQL_USER`          | `habit_shaper`             | Application database user                                          |
+| `MYSQL_PASSWORD`      | `scaffold_password`        | Local development password                                         |
+| `MYSQL_ROOT_PASSWORD` | `scaffold_root_password`   | MySQL initialization password                                      |
+| `BCRYPT_ROUNDS`       | `12`                       | Password hashing work factor (`10`–`15`)                           |
+| `SESSION_TTL_DAYS`    | `7`                        | Login session lifetime (`1`–`90` days)                             |
+| `COOKIE_SECURE`       | `false`                    | Send session cookies only over HTTPS; enable behind production TLS |
+| `DATABASE_URL`        | Assembled by Compose       | Prisma connection URL inside app/test containers                   |
+| `PORT`                | `3000`                     | Internal Express port                                              |
+| `APP_URL`             | `http://app:3000` in tests | Smoke-test target                                                  |
 
 The example values are public local-development defaults, not real secrets. Replace them for shared deployments. Keep database identifiers and credentials URL-safe because Compose interpolates them into `DATABASE_URL`. Do not commit `.env`.
 
@@ -92,8 +92,8 @@ For local backend development, set `DATABASE_URL` in your shell to the Compose d
 
 ## Structure and implementation boundary
 
-- Frontend: feature pages cover landing, authentication, onboarding, dashboard, habits, goals, statistics, settings, gamification responses, and the public Brand Kit. React Router owns route boundaries, TanStack Query owns server state, React Hook Form and Zod own form validation, and CSS Modules implement the responsive Monument design system.
-- Backend: each feature uses `route → controller → service → repository → Prisma → MySQL`, with dedicated DTO, model, and enum modules. Routes own URLs/middleware, controllers own HTTP mapping, services enforce business rules, and repositories isolate database queries.
+- Frontend: feature pages cover landing, authentication, onboarding, dashboard, habits, goals, statistics, settings, gamification responses, and the public Brand Kit. React Router owns lazy route boundaries, TanStack Query owns server state through centralized query keys, React Hook Form and Zod own form validation, and CSS Modules implement the responsive Monument design system. API adapters depend on request/response contracts rather than UI components.
+- Backend: each feature uses `route → controller → application service/use case → repository → Prisma → MySQL`. Request schemas and response contracts live in separate `dto/request` and `dto/response` boundaries. Multi-entity composition runs through an explicit unit of work, while repositories isolate database queries.
 - Database: `User`, `Session`, `Habit`, `HabitEvent`, and `Goal`, UUID IDs, enum fields, foreign keys with dependent-row cascade deletion, unique email, unique session-token hash, and unique habit/date events. Calendar dates use MySQL `DATE`; audit timestamps use `DATETIME(3)`. Optional fields are nullable and goals default to `ACTIVE`.
 - Runtime: the backend implements health, authentication/onboarding, habit management, tracking, streak statistics, goals, stateless gamification events, derived user statistics, and dashboard aggregation. Unknown API paths return JSON `404`; browser page routes serve the React shell.
 
@@ -126,9 +126,10 @@ All endpoints below require the `habit_session` cookie:
 
 ```text
 GET    /api/habits
-POST   /api/habits                              { name, description?, type, startDate }
+POST   /api/habits                              { name, description?, type, goalIds?, newGoals? }
 GET    /api/habits/:habitId
-PATCH  /api/habits/:habitId                     { name?, description?, type?, startDate? }
+PATCH  /api/habits/:habitId                     { name?, description? }
+PATCH  /api/habits/:habitId/goals               { goalIds, newGoals }
 DELETE /api/habits/:habitId
 
 PUT    /api/habits/:habitId/completions/:date   { note? }
@@ -136,14 +137,17 @@ DELETE /api/habits/:habitId/completions/:date
 PUT    /api/habits/:habitId/relapses/:date      { note? }
 DELETE /api/habits/:habitId/relapses/:date
 GET    /api/habits/:habitId/statistics
+GET    /api/statistics
 
 GET    /api/goals
-POST   /api/habits/:habitId/goals               { title, targetStreakDays, deadline? }
-PATCH  /api/goals/:goalId                       { title?, targetStreakDays?, deadline? }
+POST   /api/goals                                { title, targetDays, deadline?, habitIds, newHabits? }
+POST   /api/habits/:habitId/goals               { title, targetDays, deadline? }
+PATCH  /api/goals/:goalId                       { title?, targetDays?, deadline?, habitIds?, newHabits? }
 DELETE /api/goals/:goalId
 POST   /api/goals/:goalId/cancel
 
 GET    /api/dashboard
+GET    /api/export
 ```
 
 Creating a habit returns `meta.gamificationEvents` with `HABIT_CREATED`. Completion and relapse PUT responses use this shape:
@@ -165,6 +169,6 @@ Dates use `YYYY-MM-DD`. Habit start dates and events cannot be in the future in 
 
 BUILD current streak counts consecutive completion events ending today or yesterday when today is still open. BREAK current streak counts clean days since the most recent relapse, with a relapse today producing a streak of zero. Weekly statistics cover Monday through today in the user's timezone and begin no earlier than the habit start date. Statistics include completion totals, eligible weekly days, missed days, completion rate, and last relapse date. Calculated statistics, user statistics, gamification state, and goal progress are not stored as columns.
 
-Goals require a positive streak target. MySQL enforces at most one active goal per habit with a unique active slot. Reaching the target completes the goal when goals or dashboard data are read; cancelling/completing releases the slot. Deadlines cannot be created or changed to a past date, and overdue state is calculated for active goals.
+Goals require a positive day target and at least one connected habit. Goal and dashboard reads use a read-only progress projection; tracking and composition commands persist reconciliation atomically. Deadlines cannot be created or changed to a past date, and overdue state is calculated for active goals.
 
 Feature implementation should use meaningful incremental commits as requested in `plan.md`.

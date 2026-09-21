@@ -157,20 +157,20 @@ GET    /api/health
 
 Required stack tetap dipenuhi secara langsung:
 
-| Layer | Technology |
-|---|---|
-| Frontend | React + Vite + TypeScript |
-| Backend | Node.js + TypeScript + Express |
-| Database | MySQL 8 |
-| ORM and migrations | Prisma |
-| Validation | Zod |
-| Authentication | Database session dengan HTTP-only cookie + bcrypt |
-| Frontend routing | React Router |
-| Server-state management | TanStack Query |
-| Forms | React Hook Form |
-| Styling | CSS Modules |
-| Testing | Vitest, React Testing Library, Supertest |
-| Containerization | Docker Compose |
+| Layer                   | Technology                                        |
+| ----------------------- | ------------------------------------------------- |
+| Frontend                | React + Vite + TypeScript                         |
+| Backend                 | Node.js + TypeScript + Express                    |
+| Database                | MySQL 8                                           |
+| ORM and migrations      | Prisma                                            |
+| Validation              | Zod                                               |
+| Authentication          | Database session dengan HTTP-only cookie + bcrypt |
+| Frontend routing        | React Router                                      |
+| Server-state management | TanStack Query                                    |
+| Forms                   | React Hook Form                                   |
+| Styling                 | CSS Modules                                       |
+| Testing                 | Vitest, React Testing Library, Supertest          |
+| Containerization        | Docker Compose                                    |
 
 Tidak menggunakan Next.js, PostgreSQL, MongoDB, atau Nginx.
 

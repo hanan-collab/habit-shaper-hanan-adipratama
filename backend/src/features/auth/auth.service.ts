@@ -1,18 +1,18 @@
 import bcrypt from 'bcrypt';
 import { createHash, randomBytes } from 'node:crypto';
 import { AppError } from '../../common/app-error.js';
-import type { LoginDto, OnboardingDto, ProfileDto, RegisterDto } from './auth.dto.js';
+import type { LoginRequest, OnboardingRequest, ProfileRequest, RegisterRequest } from './dto/request/auth.request.js';
 import { AuthErrorCode } from './auth.enum.js';
 import type { AuthResult, PublicUser } from './auth.model.js';
 import { DuplicateEmailRepositoryError, type AuthRepository } from './auth.repository.js';
 
 export interface AuthService {
-  register(input: RegisterDto): Promise<AuthResult>;
-  login(input: LoginDto): Promise<AuthResult>;
+  register(input: RegisterRequest): Promise<AuthResult>;
+  login(input: LoginRequest): Promise<AuthResult>;
   getUserForToken(token: string): Promise<PublicUser | null>;
   logout(token: string): Promise<void>;
-  completeOnboarding(userId: string, input: OnboardingDto): Promise<PublicUser>;
-  updateProfile(userId: string, input: ProfileDto): Promise<PublicUser>;
+  completeOnboarding(userId: string, input: OnboardingRequest): Promise<PublicUser>;
+  updateProfile(userId: string, input: ProfileRequest): Promise<PublicUser>;
   deleteAccount(userId: string): Promise<void>;
 }
 
@@ -54,7 +54,11 @@ export function createAuthService(repository: AuthRepository, config: ServiceCon
         throw new AppError(401, AuthErrorCode.InvalidCredentials, 'Email or password is incorrect');
       }
       const session = newSession(config);
-      await repository.createSession({ userId: account.id, tokenHash: session.tokenHash, expiresAt: session.expiresAt });
+      await repository.createSession({
+        userId: account.id,
+        tokenHash: session.tokenHash,
+        expiresAt: session.expiresAt,
+      });
       const { passwordHash: _passwordHash, ...user } = account;
       return { user, token: session.token, expiresAt: session.expiresAt };
     },

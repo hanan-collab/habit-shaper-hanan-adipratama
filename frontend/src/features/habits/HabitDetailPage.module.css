@@ -1,2 +1,198 @@
-.header{display:flex;align-items:end;justify-content:space-between;gap:28px;margin-bottom:32px}.header h1{margin:12px 0}.header p{max-width:580px;color:var(--muted)}.type{padding:6px 10px;border-radius:7px;background:var(--blush);color:var(--deep-red);font-size:.7rem;font-weight:700}.identity{max-width:820px;margin:0 auto 28px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:55px}.stats article{padding:19px;border-bottom:2px solid var(--border)}.stats span,.stats strong,.stats small{display:block}.stats span{font-size:.7rem;font-weight:700;text-transform:uppercase}.stats strong{margin:10px 0 5px;font:900 3.5rem/.8 'Barlow Condensed',sans-serif}.stats small{color:var(--muted)}.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:22px}.calendarHead{display:flex;justify-content:space-between;align-items:center}.calendarHead h2{font-size:2.2rem;margin:6px 0}.calendarHead button{width:42px;height:42px;border:1px solid var(--border);background:#fff}.weekdays,.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.weekdays{margin:20px 0 8px}.weekdays span{text-align:center;font-size:.7rem;font-weight:700}.calendar i,.calendar .day{aspect-ratio:1;border:0;border-radius:7px;background:var(--warm-white)}.calendar .day{display:grid;place-content:center;position:relative}.calendar .eventDay{background:var(--deep-red);color:#fff}.calendar .today{outline:2px solid var(--ink);outline-offset:2px}.calendar b{font-size:.7rem}.bars{height:220px;margin:30px 0 20px;display:flex;align-items:end;gap:9px;border-bottom:1px solid var(--border)}.bars>div{height:100%;flex:1;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:8px}.bars span{width:100%;min-height:5px;border-radius:7px 7px 0 0}.barResolved{background:var(--deep-red)}.barMissed{background:#d8c9c7}.bars b{font-size:.67rem}.goalSection{margin:55px 0;padding:32px;display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:center;border-radius:18px;background:var(--blush)}.goalSection h2{margin:8px 0}.goalCards{display:grid;gap:14px}.danger{padding-top:30px;border-top:1px solid var(--border)}.danger>button{min-height:44px;border:0;background:transparent;color:var(--deep-red);font-weight:700}@media(max-width:800px){.header{align-items:start;flex-direction:column}.grid,.goalSection{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
-.relapses{display:grid;gap:10px;margin-top:18px}.relapses article{padding:14px;border:1px solid var(--border);border-radius:10px}.relapses p{margin:6px 0 0;color:var(--muted)}
+.header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 28px;
+  margin-bottom: 32px;
+}
+.header h1 {
+  margin: 12px 0;
+}
+.header p {
+  max-width: 580px;
+  color: var(--muted);
+}
+.type {
+  padding: 6px 10px;
+  border-radius: 7px;
+  background: var(--blush);
+  color: var(--deep-red);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.identity {
+  max-width: 820px;
+  margin: 0 auto 28px;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 55px;
+}
+.stats article {
+  padding: 19px;
+  border-bottom: 2px solid var(--border);
+}
+.stats span,
+.stats strong,
+.stats small {
+  display: block;
+}
+.stats span {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.stats strong {
+  margin: 10px 0 5px;
+  font:
+    900 3.5rem/0.8 'Barlow Condensed',
+    sans-serif;
+}
+.stats small {
+  color: var(--muted);
+}
+.grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 22px;
+}
+.calendarHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.calendarHead h2 {
+  font-size: 2.2rem;
+  margin: 6px 0;
+}
+.calendarHead button {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--border);
+  background: #fff;
+}
+.weekdays,
+.calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+.weekdays {
+  margin: 20px 0 8px;
+}
+.weekdays span {
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.calendar i,
+.calendar .day {
+  aspect-ratio: 1;
+  border: 0;
+  border-radius: 7px;
+  background: var(--warm-white);
+}
+.calendar .day {
+  display: grid;
+  place-content: center;
+  position: relative;
+}
+.calendar .eventDay {
+  background: var(--deep-red);
+  color: #fff;
+}
+.calendar .today {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+.calendar b {
+  font-size: 0.7rem;
+}
+.bars {
+  height: 220px;
+  margin: 30px 0 20px;
+  display: flex;
+  align-items: end;
+  gap: 9px;
+  border-bottom: 1px solid var(--border);
+}
+.bars > div {
+  height: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  align-items: center;
+  gap: 8px;
+}
+.bars span {
+  width: 100%;
+  min-height: 5px;
+  border-radius: 7px 7px 0 0;
+}
+.barResolved {
+  background: var(--deep-red);
+}
+.barMissed {
+  background: #d8c9c7;
+}
+.bars b {
+  font-size: 0.67rem;
+}
+.goalSection {
+  margin: 55px 0;
+  padding: 32px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: center;
+  border-radius: 18px;
+  background: var(--blush);
+}
+.goalSection h2 {
+  margin: 8px 0;
+}
+.goalCards {
+  display: grid;
+  gap: 14px;
+}
+.danger {
+  padding-top: 30px;
+  border-top: 1px solid var(--border);
+}
+.danger > button {
+  min-height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--deep-red);
+  font-weight: 700;
+}
+@media (max-width: 800px) {
+  .header {
+    align-items: start;
+    flex-direction: column;
+  }
+  .grid,
+  .goalSection {
+    grid-template-columns: 1fr;
+  }
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+.relapses {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+.relapses article {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.relapses p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}

@@ -13,10 +13,7 @@ export function createUserStatisticsService(): UserStatisticsService {
       const bestBuildStreak = Math.max(0, ...build.map((habit) => habit.statistics.longestStreak));
       const bestBreakStreak = Math.max(0, ...breaking.map((habit) => habit.statistics.longestStreak));
       return {
-        totalBuildCompletions: build.reduce(
-          (total, habit) => total + habit.statistics.totalCompletions,
-          0,
-        ),
+        totalBuildCompletions: build.reduce((total, habit) => total + habit.statistics.totalCompletions, 0),
         totalGoalsCompleted,
         bestBuildStreak,
         bestBreakStreak,

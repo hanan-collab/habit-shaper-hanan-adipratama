@@ -1,6 +1,36 @@
 {
-  "name": "@habit-shaper/backend", "private": true, "version": "0.1.0", "type": "module",
-  "scripts": {"dev": "tsx watch src/server.ts", "generate": "prisma generate", "migrate:deploy": "prisma migrate deploy", "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json", "build": "tsc", "start": "node dist/server.js", "test": "vitest run"},
-  "dependencies": {"express": "^5.1.0", "@prisma/client": "6.19.0", "prisma": "6.19.0", "zod": "^4.1.0", "bcrypt": "^6.0.0", "cookie-parser": "^1.4.7", "express-rate-limit": "^8.1.0"},
-  "devDependencies": {"@types/node": "^22.18.0", "@types/express": "^5.0.3", "@types/bcrypt": "^6.0.0", "@types/cookie-parser": "^1.4.9", "typescript": "~5.9.3", "tsx": "^4.20.0", "vitest": "^4.1.11", "supertest": "^7.1.4", "@types/supertest": "^6.0.3"}
+  "name": "@habit-shaper/backend",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "generate": "prisma generate",
+    "migrate:deploy": "prisma migrate deploy",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@habit-shaper/contracts": "0.1.0",
+    "express": "^5.1.0",
+    "@prisma/client": "6.19.0",
+    "prisma": "6.19.0",
+    "zod": "^4.1.0",
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "express-rate-limit": "^8.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.18.0",
+    "@types/express": "^5.0.3",
+    "@types/bcrypt": "^6.0.0",
+    "@types/cookie-parser": "^1.4.9",
+    "typescript": "~5.9.3",
+    "tsx": "^4.20.0",
+    "vitest": "^4.1.11",
+    "supertest": "^7.1.4",
+    "@types/supertest": "^6.0.3"
+  }
 }

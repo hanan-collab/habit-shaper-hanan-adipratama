@@ -1,0 +1,16 @@
+{
+  "name": "@habit-shaper/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./request": {
+      "types": "./request.d.ts",
+      "default": "./empty.js"
+    },
+    "./response": {
+      "types": "./response.d.ts",
+      "default": "./empty.js"
+    }
+  }
+}

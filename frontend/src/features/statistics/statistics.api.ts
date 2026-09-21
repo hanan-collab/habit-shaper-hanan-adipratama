@@ -1,1 +1,9 @@
-import{habitsApi}from'../habits/habits.api';import type{HabitHistory}from'./statistics.domain';export const statisticsApi={async all():Promise<HabitHistory[]>{const{habits}=await habitsApi.list();return Promise.all(habits.map(async habit=>{const[detail,stats]=await Promise.all([habitsApi.get(habit.id),habitsApi.statistics(habit.id)]);return{habit:detail.habit,statistics:stats.statistics}}))}};
+import { api } from '../../lib/api';
+import type { HabitHistory } from './statistics.domain';
+import type { AllStatisticsResponse } from './dto/response/statistics.response';
+
+export const statisticsApi = {
+  async all(): Promise<HabitHistory[]> {
+    return (await api<AllStatisticsResponse>('/statistics')).histories;
+  },
+};

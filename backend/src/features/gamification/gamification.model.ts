@@ -49,6 +49,4 @@ export type BreakRelapsedGamificationInput = {
 };
 
 export type GamificationInput =
-  | HabitCreatedGamificationInput
-  | BuildCompletedGamificationInput
-  | BreakRelapsedGamificationInput;
+  HabitCreatedGamificationInput | BuildCompletedGamificationInput | BreakRelapsedGamificationInput;

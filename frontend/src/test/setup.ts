@@ -9,7 +9,9 @@ class IntersectionObserverMock {
   observe() {}
   unobserve() {}
   disconnect() {}
-  takeRecords() { return []; }
+  takeRecords() {
+    return [];
+  }
 }
 
 globalThis.IntersectionObserver = IntersectionObserverMock as unknown as typeof IntersectionObserver;

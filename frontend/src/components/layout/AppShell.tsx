@@ -27,15 +27,47 @@ export function AppShell() {
       cache.setQueryData(sessionKey, null);
       navigate('/');
     } catch {
-      pushToast({ variant: 'error', title: 'Could not log out', message: 'Your session is still active. Check your connection and try again.' });
+      pushToast({
+        variant: 'error',
+        title: 'Could not log out',
+        message: 'Your session is still active. Check your connection and try again.',
+      });
     }
   };
-  return <div className={styles.layout}>
-    <main className={styles.main}><Outlet /></main>
-    <Dock className={styles.productDock} label="Product navigation">
-      {links.map(link => <NavLink key={link.to} end={link.to === '/app'} to={link.to} aria-label={link.label} className={styles.dockLink}>{({ isActive }) => <DockItem label={link.label} active={isActive}><span className={styles.icon}>{link.icon}</span></DockItem>}</NavLink>)}
-      <NavLink to="/app/settings" aria-label="Settings" className={styles.dockLink}>{({ isActive }) => <DockItem label="Settings" active={isActive}>{user && <UserAvatar username={user.username} email={user.email} />}</DockItem>}</NavLink>
-      <button type="button" aria-label="Log out" className={styles.logout} onClick={logout}><DockItem label="Log out"><LogOut size={22} /></DockItem></button>
-    </Dock>
-  </div>;
+  return (
+    <div className={styles.layout}>
+      <main className={styles.main}>
+        <Outlet />
+      </main>
+      <Dock className={styles.productDock} label="Product navigation">
+        {links.map((link) => (
+          <NavLink
+            key={link.to}
+            end={link.to === '/app'}
+            to={link.to}
+            aria-label={link.label}
+            className={styles.dockLink}
+          >
+            {({ isActive }) => (
+              <DockItem label={link.label} active={isActive}>
+                <span className={styles.icon}>{link.icon}</span>
+              </DockItem>
+            )}
+          </NavLink>
+        ))}
+        <NavLink to="/app/settings" aria-label="Settings" className={styles.dockLink}>
+          {({ isActive }) => (
+            <DockItem label="Settings" active={isActive}>
+              {user && <UserAvatar username={user.username} email={user.email} />}
+            </DockItem>
+          )}
+        </NavLink>
+        <button type="button" aria-label="Log out" className={styles.logout} onClick={logout}>
+          <DockItem label="Log out">
+            <LogOut size={22} />
+          </DockItem>
+        </button>
+      </Dock>
+    </div>
+  );
 }

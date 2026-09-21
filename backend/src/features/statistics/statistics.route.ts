@@ -7,7 +7,8 @@ import type { StatisticsService } from './statistics.service.js';
 export function createStatisticsRoute(authService: AuthService, statisticsService: StatisticsService) {
   const router = Router();
   const controller = createStatisticsController(statisticsService);
-  router.use(requireAuth(authService));
-  router.get('/:habitId/statistics', controller.get);
+  const authenticated = requireAuth(authService);
+  router.get('/statistics', authenticated, controller.all);
+  router.get('/habits/:habitId/statistics', authenticated, controller.get);
   return router;
 }

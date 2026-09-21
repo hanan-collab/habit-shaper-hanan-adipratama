@@ -1,1 +1,11 @@
-import{QueryClient,QueryClientProvider}from'@tanstack/react-query';import type{PropsWithChildren}from'react';import{ToastProvider}from'../components/ui/ToastProvider';const queryClient=new QueryClient({defaultOptions:{queries:{retry:false,staleTime:20_000}}});export function AppProviders({children}:PropsWithChildren){return <QueryClientProvider client={queryClient}><ToastProvider>{children}</ToastProvider></QueryClientProvider>}
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { PropsWithChildren } from 'react';
+import { ToastProvider } from '../components/ui/ToastProvider';
+const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 20_000 } } });
+export function AppProviders({ children }: PropsWithChildren) {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>{children}</ToastProvider>
+    </QueryClientProvider>
+  );
+}

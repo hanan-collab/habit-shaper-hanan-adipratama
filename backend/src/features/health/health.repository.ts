@@ -3,5 +3,9 @@ export interface HealthRepository {
 }
 
 export function createHealthRepository(check: () => Promise<unknown>): HealthRepository {
-  return { async checkDatabase() { await check(); } };
+  return {
+    async checkDatabase() {
+      await check();
+    },
+  };
 }

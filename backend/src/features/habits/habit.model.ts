@@ -1,17 +1,21 @@
 import type { Habit, HabitEvent } from '@prisma/client';
+import { toCalendarDate } from '../../common/calendar-date.js';
 
 export type HabitModel = Habit;
 export type HabitEventModel = HabitEvent;
 export type HabitDetailModel = Habit & { events: HabitEvent[] };
 
-const dateOnly = (date: Date) => date.toISOString().slice(0, 10);
-
 export function habitResponse(habit: HabitModel) {
-  return { ...habit, startDate: dateOnly(habit.startDate) };
+  return {
+    ...habit,
+    startDate: toCalendarDate(habit.startDate),
+    createdAt: habit.createdAt.toISOString(),
+    updatedAt: habit.updatedAt.toISOString(),
+  };
 }
 
 export function eventResponse(event: HabitEventModel) {
-  return { ...event, date: dateOnly(event.date) };
+  return { ...event, date: toCalendarDate(event.date), createdAt: event.createdAt.toISOString() };
 }
 
 export function habitDetailResponse(habit: HabitDetailModel) {

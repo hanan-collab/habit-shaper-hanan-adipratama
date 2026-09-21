@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '../../lib/queryKeys';
 import { useReducedMotion } from 'motion/react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { FormOverlay } from '../../components/ui/FormOverlay';
-import { GoalRelationComposer, type DraftGoal } from '../../components/ui/RelationComposer';
+import { GoalRelationComposer } from '../../components/ui/RelationComposer';
+import type { DraftGoal } from '../../types/relations';
 import { GoalCard, HabitCard } from '../../components/ui/TrackingCards';
 import { useToast } from '../../components/ui/ToastProvider';
 import { localDate } from '../../lib/api';
@@ -16,39 +18,345 @@ import { habitsApi } from './habits.api';
 import { useHabitAction } from './useHabitAction';
 import styles from './HabitDetailPage.module.css';
 
-const monthDays = (month: Date) => { const year = month.getFullYear(), index = month.getMonth(), count = new Date(year, index + 1, 0).getDate(), first = new Date(year, index, 1).getDay(); return { blanks: Array(first).fill(null), days: Array.from({ length: count }, (_, i) => `${year}-${String(index + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`) }; };
-const dateOffset = (date: string, amount: number) => { const value = new Date(`${date}T12:00:00`); value.setDate(value.getDate() + amount); return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`; };
+const monthDays = (month: Date) => {
+  const year = month.getFullYear(),
+    index = month.getMonth(),
+    count = new Date(year, index + 1, 0).getDate(),
+    first = new Date(year, index, 1).getDay();
+  return {
+    blanks: Array(first).fill(null),
+    days: Array.from(
+      { length: count },
+      (_, i) => `${year}-${String(index + 1).padStart(2, '0')}-${String(i + 1).padStart(2, '0')}`,
+    ),
+  };
+};
+const dateOffset = (date: string, amount: number) => {
+  const value = new Date(`${date}T12:00:00`);
+  value.setDate(value.getDate() + amount);
+  return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+};
 
 export function HabitDetailPage() {
   const { habitId = '' } = useParams();
-  const navigate = useNavigate(); const cache = useQueryClient(); const session = useSession(); const { pushToast } = useToast(); const reducedMotion = useReducedMotion();
-  const [events, setEvents] = useState<GamificationEvent[]>([]); const [confirmDelete, setConfirmDelete] = useState(false); const [month, setMonth] = useState(() => new Date());
-  const [editingGoals, setEditingGoals] = useState(false); const [goalIds, setGoalIds] = useState<string[]>([]); const [draftGoals, setDraftGoals] = useState<DraftGoal[]>([]); const [relationError, setRelationError] = useState('');
-  const habit = useQuery({ queryKey: ['habit', habitId], queryFn: () => habitsApi.get(habitId) });
-  const stats = useQuery({ queryKey: ['habit-statistics', habitId], queryFn: () => habitsApi.statistics(habitId) });
-  const goals = useQuery({ queryKey: ['goals'], queryFn: goalsApi.list });
-  const today = localDate(session.data?.user.timezone); const item = habit.data?.habit; const statistics = stats.data?.statistics; const todayEvent = item?.events?.find(event => event.date === today);
-  const cardHabit: DashboardHabit | null = item && statistics ? { id: item.id, name: item.name, description: item.description, type: item.type, startDate: item.startDate, statistics, activeGoalId: null, todayStatus: item.type === 'BUILD' ? (todayEvent?.type === 'COMPLETED' ? 'COMPLETED' : 'PENDING') : (todayEvent?.type === 'RELAPSED' ? 'RELAPSED' : 'CLEAN') } : null;
+  const navigate = useNavigate();
+  const cache = useQueryClient();
+  const session = useSession();
+  const { pushToast } = useToast();
+  const reducedMotion = useReducedMotion();
+  const [events, setEvents] = useState<GamificationEvent[]>([]);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [month, setMonth] = useState(() => new Date());
+  const [editingGoals, setEditingGoals] = useState(false);
+  const [goalIds, setGoalIds] = useState<string[]>([]);
+  const [draftGoals, setDraftGoals] = useState<DraftGoal[]>([]);
+  const [relationError, setRelationError] = useState('');
+  const habit = useQuery({ queryKey: queryKeys.habits.detail(habitId), queryFn: () => habitsApi.get(habitId) });
+  const stats = useQuery({
+    queryKey: queryKeys.habits.statistics(habitId),
+    queryFn: () => habitsApi.statistics(habitId),
+  });
+  const goals = useQuery({ queryKey: queryKeys.goals.all, queryFn: goalsApi.list });
+  const today = localDate(session.data?.user.timezone);
+  const item = habit.data?.habit;
+  const statistics = stats.data?.statistics;
+  const todayEvent = item?.events?.find((event) => event.date === today);
+  const cardHabit: DashboardHabit | null =
+    item && statistics
+      ? {
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          type: item.type,
+          startDate: item.startDate,
+          statistics,
+          activeGoalId: null,
+          todayStatus:
+            item.type === 'BUILD'
+              ? todayEvent?.type === 'COMPLETED'
+                ? 'COMPLETED'
+                : 'PENDING'
+              : todayEvent?.type === 'RELAPSED'
+                ? 'RELAPSED'
+                : 'CLEAN',
+        }
+      : null;
   const action = useHabitAction(cardHabit ? [cardHabit] : [], setEvents);
-  const remove = useMutation({ mutationFn: () => habitsApi.delete(habitId), onSuccess: async () => { await Promise.all([cache.invalidateQueries({ queryKey: dashboardKey }), cache.invalidateQueries({ queryKey: ['goals'] })]); navigate('/app/habits', { replace: true }); }, onError: () => pushToast({ variant: 'error', title: 'Habit not deleted', message: 'Try again.' }) });
-  const saveGoals = useMutation({ mutationFn: () => habitsApi.updateGoals(habitId, { goalIds, newGoals: draftGoals.map(({ key: _key, ...draft }) => ({ ...draft, deadline: draft.deadline || null })) }), onSuccess: async () => { setEditingGoals(false); setDraftGoals([]); await Promise.all([cache.invalidateQueries({ queryKey: ['goals'] }), cache.invalidateQueries({ queryKey: ['habit', habitId] }), cache.invalidateQueries({ queryKey: dashboardKey }), cache.invalidateQueries({ queryKey: ['statistics'] })]); }, onError: error => setRelationError(error instanceof Error ? error.message : 'Could not save connections.') });
+  const remove = useMutation({
+    mutationFn: () => habitsApi.delete(habitId),
+    onSuccess: async () => {
+      await Promise.all([
+        cache.invalidateQueries({ queryKey: dashboardKey }),
+        cache.invalidateQueries({ queryKey: queryKeys.goals.all }),
+      ]);
+      navigate('/app/habits', { replace: true });
+    },
+    onError: () => pushToast({ variant: 'error', title: 'Habit not deleted', message: 'Try again.' }),
+  });
+  const saveGoals = useMutation({
+    mutationFn: () =>
+      habitsApi.updateGoals(habitId, {
+        goalIds,
+        newGoals: draftGoals.map(({ key: _key, ...draft }) => ({ ...draft, deadline: draft.deadline || null })),
+      }),
+    onSuccess: async () => {
+      setEditingGoals(false);
+      setDraftGoals([]);
+      await Promise.all([
+        cache.invalidateQueries({ queryKey: queryKeys.goals.all }),
+        cache.invalidateQueries({ queryKey: queryKeys.habits.detail(habitId) }),
+        cache.invalidateQueries({ queryKey: dashboardKey }),
+        cache.invalidateQueries({ queryKey: queryKeys.statistics.all }),
+      ]);
+    },
+    onError: (error) => setRelationError(error instanceof Error ? error.message : 'Could not save connections.'),
+  });
   const calendar = useMemo(() => monthDays(month), [month]);
-  if (habit.isLoading || stats.isLoading) return <div className="stack"><div className="skeleton" /><div className="skeleton" /></div>;
-  if (habit.isError || stats.isError || !item || !statistics || !cardHabit) return <section className="panel"><h2>We couldn't load this habit.</h2><Link className="raisedSecondary" to="/app/habits">Back to habits</Link></section>;
-  const activeGoals = goals.data?.goals.filter(goal => goal.habits.some(link => link.id === habitId) && goal.status === 'ACTIVE') ?? [];
-  const eventDates = new Map(item.events?.map(event => [event.date, event.type]));
-  const sevenDays = Array.from({ length: 7 }, (_, index) => dateOffset(today, index - 6)).map(date => { const event = eventDates.get(date); const eligible = date >= item.startDate && date <= today; return { date, event, eligible, resolved: eligible && (item.type === 'BUILD' ? event === 'COMPLETED' : event !== 'RELAPSED') }; });
-  return <>
-    <header className={styles.header}><div><div className="cluster"><span className={styles.type}>{item.type}</span><span className="muted">Daily · since {item.startDate}</span></div><h1>{item.name}</h1>{item.description && <p>{item.description}</p>}</div><Link className="raisedSecondary" to={`/app/habits/${habitId}/edit`}>Edit habit</Link></header>
-    <section className={styles.identity}><HabitCard habit={cardHabit} variant="library" reducedMotion={Boolean(reducedMotion)} burst={action.burstId === habitId} pending={action.pendingId === habitId} onAction={() => action.act(cardHabit)} /></section>
-    <section className={styles.stats}><article><span>Current</span><strong>{statistics.currentStreak}</strong><small>days</small></article><article><span>Personal best</span><strong>{statistics.longestStreak}</strong><small>days</small></article><article><span>This week</span><strong>{Math.round(statistics.weeklyCompletionRate)}%</strong><small>{statistics.completedThisWeek} complete · {statistics.missedThisWeek} missed</small></article><article><span>Total steps</span><strong>{statistics.totalCompletions}</strong><small>recorded completions</small></article></section>
-    <section className={styles.grid}><article className="panel"><header className={styles.calendarHead}><div><p className="eyebrow">History</p><h2>{month.toLocaleDateString('en', { month: 'long', year: 'numeric' })}</h2></div><div><button aria-label="Previous month" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}>←</button><button aria-label="Next month" onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}>→</button></div></header><div className={styles.weekdays}>{['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => <span key={`${day}${index}`}>{day}</span>)}</div><div className={styles.calendar}>{calendar.blanks.map((_, index) => <i key={`b${index}`} />)}{calendar.days.map(date => <span key={date} title={`${date}: ${eventDates.get(date) ?? 'No event'}`} className={`${styles.day} ${eventDates.has(date) ? styles.eventDay : ''} ${date === today ? styles.today : ''}`}><span>{Number(date.slice(-2))}</span>{eventDates.has(date) && <b>{eventDates.get(date) === 'COMPLETED' ? '✓' : '•'}</b>}</span>)}</div></article>
-      <article className="panel"><p className="eyebrow">Seven-day pattern</p><h2>Last seven days.</h2><div className={styles.bars}>{sevenDays.map(day => <div key={day.date} title={`${day.date}: ${day.event ?? (day.resolved ? 'Clear' : 'No event')}`}><span className={day.resolved ? styles.barResolved : styles.barMissed} style={{ height: day.eligible ? (day.resolved ? '100%' : '8%') : '3%' }} /><b>{new Date(`${day.date}T12:00:00`).toLocaleDateString('en', { weekday: 'narrow' })}</b></div>)}</div><p className="muted">Built from recorded events for the last seven days.</p></article></section>
-    <section className={styles.goalSection}><div><p className="eyebrow">Connected goals</p><h2>{activeGoals.length ? `${activeGoals.length} active goal${activeGoals.length === 1 ? '' : 's'}` : 'No connected goals.'}</h2><button className="raisedSecondary" onClick={() => { setGoalIds(activeGoals.map(goal => goal.id)); setDraftGoals([]); setRelationError(''); setEditingGoals(true); }}>Manage goals</button></div>{activeGoals.length ? <div className={styles.goalCards}>{activeGoals.map(goal => <GoalCard key={goal.id} goal={goal} variant="compact" reducedMotion={Boolean(reducedMotion)} />)}</div> : <p className="muted">Add an existing goal or stage a new one.</p>}</section>
-    {item.type === 'BREAK' && <section className="panel"><p className="eyebrow">Relapse history</p><h2>Most recent first.</h2><div className={styles.relapses}>{item.events?.filter(event => event.type === 'RELAPSED').slice().sort((a, b) => b.date.localeCompare(a.date)).map(event => <article key={event.id}><strong>{new Date(`${event.date}T12:00:00`).toLocaleDateString('en', { dateStyle: 'medium' })}</strong><p>{event.note?.trim() || 'No reason added.'}</p></article>)}{!item.events?.some(event => event.type === 'RELAPSED') && <p className="muted">No relapses recorded.</p>}</div></section>}
-    <section className={styles.danger}><button onClick={() => setConfirmDelete(true)}>Delete habit</button></section>
-    {confirmDelete && <FormOverlay eyebrow="Delete habit" title="Delete this habit?" copy="Its history will be deleted and it will be removed from connected goals." pending={remove.isPending} onClose={() => setConfirmDelete(false)} footer={<><button className="plainButton" disabled={remove.isPending} onClick={() => setConfirmDelete(false)}>Keep habit</button><button className="raisedPrimary" disabled={remove.isPending} onClick={() => remove.mutate()}>{remove.isPending ? 'Deleting…' : 'Delete habit'}</button></>}><p>This cannot be undone.</p></FormOverlay>}
-    {editingGoals && <FormOverlay eyebrow="Habit relationships" title="Connected goals." pending={saveGoals.isPending} onClose={() => setEditingGoals(false)} footer={<><button className="plainButton" disabled={saveGoals.isPending} onClick={() => setEditingGoals(false)}>Cancel</button><button className="raisedPrimary" disabled={saveGoals.isPending} onClick={() => saveGoals.mutate()}>{saveGoals.isPending ? 'Saving…' : 'Save connections'}</button></>}><GoalRelationComposer goals={goals.data?.goals ?? []} selectedIds={goalIds} drafts={draftGoals} onSelectedIds={setGoalIds} onDrafts={setDraftGoals} pending={saveGoals.isPending} error={relationError} onError={setRelationError} /></FormOverlay>}
-    {action.dialog}<EventResponse events={events} onDismiss={() => setEvents([])} />
-  </>;
+  if (habit.isLoading || stats.isLoading)
+    return (
+      <div className="stack">
+        <div className="skeleton" />
+        <div className="skeleton" />
+      </div>
+    );
+  if (habit.isError || stats.isError || !item || !statistics || !cardHabit)
+    return (
+      <section className="panel">
+        <h2>We couldn't load this habit.</h2>
+        <Link className="raisedSecondary" to="/app/habits">
+          Back to habits
+        </Link>
+      </section>
+    );
+  const activeGoals =
+    goals.data?.goals.filter((goal) => goal.habits.some((link) => link.id === habitId) && goal.status === 'ACTIVE') ??
+    [];
+  const eventDates = new Map(item.events?.map((event) => [event.date, event.type]));
+  const sevenDays = Array.from({ length: 7 }, (_, index) => dateOffset(today, index - 6)).map((date) => {
+    const event = eventDates.get(date);
+    const eligible = date >= item.startDate && date <= today;
+    return {
+      date,
+      event,
+      eligible,
+      resolved: eligible && (item.type === 'BUILD' ? event === 'COMPLETED' : event !== 'RELAPSED'),
+    };
+  });
+  return (
+    <>
+      <header className={styles.header}>
+        <div>
+          <div className="cluster">
+            <span className={styles.type}>{item.type}</span>
+            <span className="muted">Daily · since {item.startDate}</span>
+          </div>
+          <h1>{item.name}</h1>
+          {item.description && <p>{item.description}</p>}
+        </div>
+        <Link className="raisedSecondary" to={`/app/habits/${habitId}/edit`}>
+          Edit habit
+        </Link>
+      </header>
+      <section className={styles.identity}>
+        <HabitCard
+          habit={cardHabit}
+          variant="library"
+          reducedMotion={Boolean(reducedMotion)}
+          burst={action.burstId === habitId}
+          pending={action.pendingId === habitId}
+          onAction={() => action.act(cardHabit)}
+        />
+      </section>
+      <section className={styles.stats}>
+        <article>
+          <span>Current</span>
+          <strong>{statistics.currentStreak}</strong>
+          <small>days</small>
+        </article>
+        <article>
+          <span>Personal best</span>
+          <strong>{statistics.longestStreak}</strong>
+          <small>days</small>
+        </article>
+        <article>
+          <span>This week</span>
+          <strong>{Math.round(statistics.weeklyCompletionRate)}%</strong>
+          <small>
+            {statistics.completedThisWeek} complete · {statistics.missedThisWeek} missed
+          </small>
+        </article>
+        <article>
+          <span>Total steps</span>
+          <strong>{statistics.totalCompletions}</strong>
+          <small>recorded completions</small>
+        </article>
+      </section>
+      <section className={styles.grid}>
+        <article className="panel">
+          <header className={styles.calendarHead}>
+            <div>
+              <p className="eyebrow">History</p>
+              <h2>{month.toLocaleDateString('en', { month: 'long', year: 'numeric' })}</h2>
+            </div>
+            <div>
+              <button
+                aria-label="Previous month"
+                onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
+              >
+                ←
+              </button>
+              <button
+                aria-label="Next month"
+                onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
+              >
+                →
+              </button>
+            </div>
+          </header>
+          <div className={styles.weekdays}>
+            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+              <span key={`${day}${index}`}>{day}</span>
+            ))}
+          </div>
+          <div className={styles.calendar}>
+            {calendar.blanks.map((_, index) => (
+              <i key={`b${index}`} />
+            ))}
+            {calendar.days.map((date) => (
+              <span
+                key={date}
+                title={`${date}: ${eventDates.get(date) ?? 'No event'}`}
+                className={`${styles.day} ${eventDates.has(date) ? styles.eventDay : ''} ${date === today ? styles.today : ''}`}
+              >
+                <span>{Number(date.slice(-2))}</span>
+                {eventDates.has(date) && <b>{eventDates.get(date) === 'COMPLETED' ? '✓' : '•'}</b>}
+              </span>
+            ))}
+          </div>
+        </article>
+        <article className="panel">
+          <p className="eyebrow">Seven-day pattern</p>
+          <h2>Last seven days.</h2>
+          <div className={styles.bars}>
+            {sevenDays.map((day) => (
+              <div key={day.date} title={`${day.date}: ${day.event ?? (day.resolved ? 'Clear' : 'No event')}`}>
+                <span
+                  className={day.resolved ? styles.barResolved : styles.barMissed}
+                  style={{ height: day.eligible ? (day.resolved ? '100%' : '8%') : '3%' }}
+                />
+                <b>{new Date(`${day.date}T12:00:00`).toLocaleDateString('en', { weekday: 'narrow' })}</b>
+              </div>
+            ))}
+          </div>
+          <p className="muted">Built from recorded events for the last seven days.</p>
+        </article>
+      </section>
+      <section className={styles.goalSection}>
+        <div>
+          <p className="eyebrow">Connected goals</p>
+          <h2>
+            {activeGoals.length
+              ? `${activeGoals.length} active goal${activeGoals.length === 1 ? '' : 's'}`
+              : 'No connected goals.'}
+          </h2>
+          <button
+            className="raisedSecondary"
+            onClick={() => {
+              setGoalIds(activeGoals.map((goal) => goal.id));
+              setDraftGoals([]);
+              setRelationError('');
+              setEditingGoals(true);
+            }}
+          >
+            Manage goals
+          </button>
+        </div>
+        {activeGoals.length ? (
+          <div className={styles.goalCards}>
+            {activeGoals.map((goal) => (
+              <GoalCard key={goal.id} goal={goal} variant="compact" reducedMotion={Boolean(reducedMotion)} />
+            ))}
+          </div>
+        ) : (
+          <p className="muted">Add an existing goal or stage a new one.</p>
+        )}
+      </section>
+      {item.type === 'BREAK' && (
+        <section className="panel">
+          <p className="eyebrow">Relapse history</p>
+          <h2>Most recent first.</h2>
+          <div className={styles.relapses}>
+            {item.events
+              ?.filter((event) => event.type === 'RELAPSED')
+              .slice()
+              .sort((a, b) => b.date.localeCompare(a.date))
+              .map((event) => (
+                <article key={event.id}>
+                  <strong>
+                    {new Date(`${event.date}T12:00:00`).toLocaleDateString('en', { dateStyle: 'medium' })}
+                  </strong>
+                  <p>{event.note?.trim() || 'No reason added.'}</p>
+                </article>
+              ))}
+            {!item.events?.some((event) => event.type === 'RELAPSED') && <p className="muted">No relapses recorded.</p>}
+          </div>
+        </section>
+      )}
+      <section className={styles.danger}>
+        <button onClick={() => setConfirmDelete(true)}>Delete habit</button>
+      </section>
+      {confirmDelete && (
+        <FormOverlay
+          eyebrow="Delete habit"
+          title="Delete this habit?"
+          copy="Its history will be deleted and it will be removed from connected goals."
+          pending={remove.isPending}
+          onClose={() => setConfirmDelete(false)}
+          footer={
+            <>
+              <button className="plainButton" disabled={remove.isPending} onClick={() => setConfirmDelete(false)}>
+                Keep habit
+              </button>
+              <button className="raisedPrimary" disabled={remove.isPending} onClick={() => remove.mutate()}>
+                {remove.isPending ? 'Deleting…' : 'Delete habit'}
+              </button>
+            </>
+          }
+        >
+          <p>This cannot be undone.</p>
+        </FormOverlay>
+      )}
+      {editingGoals && (
+        <FormOverlay
+          eyebrow="Habit relationships"
+          title="Connected goals."
+          pending={saveGoals.isPending}
+          onClose={() => setEditingGoals(false)}
+          footer={
+            <>
+              <button className="plainButton" disabled={saveGoals.isPending} onClick={() => setEditingGoals(false)}>
+                Cancel
+              </button>
+              <button className="raisedPrimary" disabled={saveGoals.isPending} onClick={() => saveGoals.mutate()}>
+                {saveGoals.isPending ? 'Saving…' : 'Save connections'}
+              </button>
+            </>
+          }
+        >
+          <GoalRelationComposer
+            goals={goals.data?.goals ?? []}
+            selectedIds={goalIds}
+            drafts={draftGoals}
+            onSelectedIds={setGoalIds}
+            onDrafts={setDraftGoals}
+            pending={saveGoals.isPending}
+            error={relationError}
+            onError={setRelationError}
+          />
+        </FormOverlay>
+      )}
+      {action.dialog}
+      <EventResponse events={events} onDismiss={() => setEvents([])} />
+    </>
+  );
 }

@@ -1,1 +1,23 @@
-import{motion,useInView,useReducedMotion}from'motion/react';import{useRef,type PropsWithChildren}from'react';import styles from'./Magic.module.css';export function BlurFade({children,delay=0,className=''}:PropsWithChildren<{delay?:number;className?:string}>){const ref=useRef(null);const visible=useInView(ref,{once:true,amount:.15});const reduced=useReducedMotion();return <motion.div ref={ref} className={`${styles.blurFade} ${className}`} initial={reduced?false:{opacity:0,y:16,filter:'blur(5px)'}} animate={visible?{opacity:1,y:0,filter:'blur(0px)'}:{}} transition={{duration:.48,delay,ease:[.2,.8,.2,1]}}>{children}</motion.div>}
+import { motion, useInView, useReducedMotion } from 'motion/react';
+import { useRef, type PropsWithChildren } from 'react';
+import styles from './Magic.module.css';
+export function BlurFade({
+  children,
+  delay = 0,
+  className = '',
+}: PropsWithChildren<{ delay?: number; className?: string }>) {
+  const ref = useRef(null);
+  const visible = useInView(ref, { once: true, amount: 0.15 });
+  const reduced = useReducedMotion();
+  return (
+    <motion.div
+      ref={ref}
+      className={`${styles.blurFade} ${className}`}
+      initial={reduced ? false : { opacity: 0, y: 16, filter: 'blur(5px)' }}
+      animate={visible ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}}
+      transition={{ duration: 0.48, delay, ease: [0.2, 0.8, 0.2, 1] }}
+    >
+      {children}
+    </motion.div>
+  );
+}

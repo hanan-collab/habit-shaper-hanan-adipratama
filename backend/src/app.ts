@@ -17,35 +17,51 @@ import type { DashboardService } from './features/dashboard/dashboard.service.js
 import { createTrackingRoute } from './features/tracking/tracking.route.js';
 import type { TrackingService } from './features/tracking/tracking.service.js';
 import type { CompositionService } from './features/composition/composition.service.js';
+import { createExportRoute } from './features/export/export.route.js';
+import type { ExportService } from './features/export/export.service.js';
+import { requestContext } from './middleware/request-context.js';
 
-type AppOptions = {
+type BaseAppOptions = {
   healthService: HealthService;
-  authService?: AuthService;
-  habitService?: HabitService;
-  statisticsService?: StatisticsService;
-  goalService?: GoalService;
-  dashboardService?: DashboardService;
-  trackingService?: TrackingService;
-  compositionService?: CompositionService;
   cookieSecure?: boolean;
   frontendDirectory?: string;
 };
 
+type HealthAppOptions = BaseAppOptions & { authService?: never };
+type AuthAppOptions = BaseAppOptions & { authService: AuthService; habitService?: never };
+type FullAppOptions = BaseAppOptions & {
+  authService: AuthService;
+  habitService: HabitService;
+  statisticsService: StatisticsService;
+  goalService: GoalService;
+  dashboardService: DashboardService;
+  trackingService: TrackingService;
+  compositionService: CompositionService;
+  exportService: ExportService;
+};
+type AppOptions = HealthAppOptions | AuthAppOptions | FullAppOptions;
+
 export function createApp(options: AppOptions) {
   const app = express();
   app.disable('x-powered-by');
+  app.use(requestContext);
   app.use(express.json({ limit: '32kb' }));
   app.use(cookieParser());
   app.use('/api/health', createHealthRoute(options.healthService));
-  if (options.authService) {
+  if ('authService' in options && options.authService) {
     app.use('/api/auth', createAuthRoute(options.authService, { cookieSecure: options.cookieSecure ?? false }));
-    if (options.goalService) app.use('/api', createGoalRoute(options.authService, options.goalService, options.compositionService));
-    if (options.dashboardService) app.use('/api/dashboard', createDashboardRoute(options.authService, options.dashboardService));
-    if (options.statisticsService) app.use('/api/habits', createStatisticsRoute(options.authService, options.statisticsService));
-    if (options.trackingService) app.use('/api/habits', createTrackingRoute(options.authService, options.trackingService));
-    if (options.habitService) app.use('/api/habits', createHabitRoute(options.authService, options.habitService, options.compositionService));
+    if ('habitService' in options && options.habitService) {
+      app.use('/api', createGoalRoute(options.authService, options.goalService, options.compositionService));
+      app.use('/api/dashboard', createDashboardRoute(options.authService, options.dashboardService));
+      app.use('/api', createStatisticsRoute(options.authService, options.statisticsService));
+      app.use('/api/habits', createTrackingRoute(options.authService, options.trackingService));
+      app.use('/api/export', createExportRoute(options.authService, options.exportService));
+      app.use('/api/habits', createHabitRoute(options.authService, options.habitService, options.compositionService));
+    }
   }
-  app.use('/api', (_request, response) => { response.status(404).json({ error: 'Not found' }); });
+  app.use('/api', (_request, response) => {
+    response.status(404).json({ error: 'Not found' });
+  });
   if (options.frontendDirectory) {
     const directory = path.resolve(options.frontendDirectory);
     app.use(express.static(directory));
@@ -54,7 +70,7 @@ export function createApp(options: AppOptions) {
       response.sendFile(path.join(directory, 'index.html'));
     });
   }
-  app.use((error: unknown, _request: express.Request, response: express.Response, _next: express.NextFunction) => {
+  app.use((error: unknown, request: express.Request, response: express.Response, _next: express.NextFunction) => {
     if (error instanceof AppError) {
       response.status(error.status).json({ error: { code: error.code, message: error.message } });
       return;
@@ -63,7 +79,16 @@ export function createApp(options: AppOptions) {
       response.status(400).json({ error: { code: 'INVALID_JSON', message: 'Request body contains invalid JSON' } });
       return;
     }
-    console.error(error);
+    console.error(
+      JSON.stringify({
+        level: 'error',
+        requestId: request.requestId,
+        method: request.method,
+        path: request.path,
+        error:
+          error instanceof Error ? { name: error.name, message: error.message, stack: error.stack } : String(error),
+      }),
+    );
     response.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'An unexpected error occurred' } });
   });
   return app;

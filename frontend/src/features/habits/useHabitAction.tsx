@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { localDate } from '../../lib/api';
+import { queryKeys } from '../../lib/queryKeys';
 import type { DashboardHabit, GamificationEvent } from '../../types/domain';
 import { useToast } from '../../components/ui/ToastProvider';
 import { useSession } from '../auth/auth.queries';
@@ -21,36 +22,49 @@ export function useHabitAction(habits: DashboardHabit[], onEvents?: (events: Gam
       const date = localDate(session.data?.user.timezone);
       if (input.action === 'undo') return habitsApi.removeCompletion(input.id, date);
       if (input.action === 'undo-relapse') return habitsApi.removeRelapse(input.id, date);
-      if (input.action === 'relapse') return habitsApi.relapse(input.id, date, input.note) as Promise<{ meta: { gamificationEvents: GamificationEvent[] } }>;
-      return habitsApi.complete(input.id, date) as Promise<{ meta: { gamificationEvents: GamificationEvent[] } }>;
+      if (input.action === 'relapse') return habitsApi.relapse(input.id, date, input.note);
+      return habitsApi.complete(input.id, date);
     },
     onSuccess: async (result, input) => {
       if (result && 'meta' in result) {
         onEvents?.(result.meta.gamificationEvents);
         if (input.action === 'complete') {
           setBurstId(input.id);
-          window.setTimeout(() => setBurstId(current => current === input.id ? null : current), 900);
+          window.setTimeout(() => setBurstId((current) => (current === input.id ? null : current)), 900);
         }
       }
       setRelapseId(null);
       await Promise.all([
         cache.invalidateQueries({ queryKey: dashboardKey }),
-        cache.invalidateQueries({ queryKey: ['habit', input.id] }),
-        cache.invalidateQueries({ queryKey: ['habit-statistics', input.id] }),
-        cache.invalidateQueries({ queryKey: ['goals'] }),
-        cache.invalidateQueries({ queryKey: ['statistics-summary'] }),
-        cache.invalidateQueries({ queryKey: ['statistics-all'] }),
+        cache.invalidateQueries({ queryKey: queryKeys.habits.detail(input.id) }),
+        cache.invalidateQueries({ queryKey: queryKeys.habits.statistics(input.id) }),
+        cache.invalidateQueries({ queryKey: queryKeys.goals.all }),
+        cache.invalidateQueries({ queryKey: queryKeys.statistics.summary }),
+        cache.invalidateQueries({ queryKey: queryKeys.statistics.all }),
       ]);
     },
-    onError: () => pushToast({ variant: 'error', title: "Couldn't save action", message: 'Your progress has not changed. Try again.' }),
+    onError: () =>
+      pushToast({
+        variant: 'error',
+        title: "Couldn't save action",
+        message: 'Your progress has not changed. Try again.',
+      }),
   });
 
   const act = (habit: DashboardHabit) => {
-    if (habit.type === 'BUILD') mutation.mutate({ id: habit.id, action: habit.todayStatus === 'COMPLETED' ? 'undo' : 'complete' });
+    if (habit.type === 'BUILD')
+      mutation.mutate({ id: habit.id, action: habit.todayStatus === 'COMPLETED' ? 'undo' : 'complete' });
     else if (habit.todayStatus === 'RELAPSED') mutation.mutate({ id: habit.id, action: 'undo-relapse' });
     else setRelapseId(habit.id);
   };
-  const relapseHabit = habits.find(habit => habit.id === relapseId);
-  const dialog = relapseHabit ? <RelapseDialog habitName={relapseHabit.name} pending={mutation.isPending} onClose={() => setRelapseId(null)} onConfirm={note => mutation.mutate({ id: relapseHabit.id, action: 'relapse', note })} /> : null;
-  return { act, dialog, burstId, pendingId: mutation.isPending ? mutation.variables?.id ?? null : null };
+  const relapseHabit = habits.find((habit) => habit.id === relapseId);
+  const dialog = relapseHabit ? (
+    <RelapseDialog
+      habitName={relapseHabit.name}
+      pending={mutation.isPending}
+      onClose={() => setRelapseId(null)}
+      onConfirm={(note) => mutation.mutate({ id: relapseHabit.id, action: 'relapse', note })}
+    />
+  ) : null;
+  return { act, dialog, burstId, pendingId: mutation.isPending ? (mutation.variables?.id ?? null) : null };
 }

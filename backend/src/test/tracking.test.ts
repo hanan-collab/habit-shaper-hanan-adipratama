@@ -9,12 +9,22 @@ import { createTrackingService } from '../features/tracking/tracking.service.js'
 
 const today = new Date().toISOString().slice(0, 10);
 const habit = (type: Habit['type']): Habit => ({
-  id: 'habit-1', userId: 'user-1', name: 'Habit', description: null, type,
-  startDate: new Date(`${today}T00:00:00.000Z`), createdAt: new Date(), updatedAt: new Date(),
+  id: 'habit-1',
+  userId: 'user-1',
+  name: 'Habit',
+  description: null,
+  type,
+  startDate: new Date(`${today}T00:00:00.000Z`),
+  createdAt: new Date(),
+  updatedAt: new Date(),
 });
 const event = (type: HabitEvent['type']): HabitEvent => ({
-  id: 'event-1', habitId: 'habit-1', type, date: new Date(`${today}T00:00:00.000Z`),
-  note: null, createdAt: new Date(),
+  id: 'event-1',
+  habitId: 'habit-1',
+  type,
+  date: new Date(`${today}T00:00:00.000Z`),
+  note: null,
+  createdAt: new Date(),
 });
 let source: Habit & { events: HabitEvent[] };
 let repository: TrackingRepository;
@@ -33,20 +43,26 @@ beforeEach(() => {
   } as unknown as GoalService;
 });
 
-const service = () => createTrackingService(
-  repository,
-  createStatisticsService({ findSource: async () => null }),
-  goalService,
-  createGamificationService(),
-);
+const service = () =>
+  createTrackingService(
+    repository,
+    createStatisticsService({ findSource: async () => null, listSources: async () => [] }),
+    goalService,
+    createGamificationService(),
+  );
 
 describe('tracking service', () => {
   test('creates a BUILD completion with fresh stats and semantic events', async () => {
-    const result = await service().put('user-1', 'UTC', source.id, today, TrackingEventKind.Completed, { note: 'must be ignored' });
+    const result = await service().put('user-1', 'UTC', source.id, today, TrackingEventKind.Completed, {
+      note: 'must be ignored',
+    });
     expect(repository.putEvent).toHaveBeenCalledWith(expect.objectContaining({ note: undefined }));
     expect(result.data.stats).toMatchObject({ currentStreak: 1, totalCompletions: 1 });
     expect(result.meta.gamificationEvents.map(({ type }) => type)).toEqual([
-      'PERSONAL_BEST', 'FIRST_CHECK_IN', 'STREAK_STARTED', 'DAILY_COMPLETION',
+      'PERSONAL_BEST',
+      'FIRST_CHECK_IN',
+      'STREAK_STARTED',
+      'DAILY_COMPLETION',
     ]);
   });
 
@@ -66,7 +82,9 @@ describe('tracking service', () => {
   test('returns only a recovery event for a BREAK relapse', async () => {
     source = { ...habit('BREAK'), events: [] };
     repository.putEvent = vi.fn(async () => ({ event: event('RELAPSED'), created: true }));
-    const result = await service().put('user-1', 'UTC', source.id, today, TrackingEventKind.Relapsed, { note: 'trigger' });
+    const result = await service().put('user-1', 'UTC', source.id, today, TrackingEventKind.Relapsed, {
+      note: 'trigger',
+    });
     expect(repository.putEvent).toHaveBeenCalledWith(expect.objectContaining({ note: 'trigger' }));
     expect(result.meta.gamificationEvents).toEqual([
       expect.objectContaining({ type: 'RELAPSE_RECORDED', level: 'RECOVERY', value: 0 }),
@@ -74,7 +92,8 @@ describe('tracking service', () => {
   });
 
   test('rejects an event incompatible with the habit type', async () => {
-    await expect(service().put('user-1', 'UTC', source.id, today, TrackingEventKind.Relapsed, {}))
-      .rejects.toMatchObject({ code: 'TRACKING_EVENT_TYPE_MISMATCH' });
+    await expect(
+      service().put('user-1', 'UTC', source.id, today, TrackingEventKind.Relapsed, {}),
+    ).rejects.toMatchObject({ code: 'TRACKING_EVENT_TYPE_MISMATCH' });
   });
 });

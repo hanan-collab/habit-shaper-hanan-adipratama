@@ -24,29 +24,29 @@ Principles:
 
 ## 3. Response Levels
 
-| Level | Presentation | Typical duration |
-|---|---|---:|
-| `MICRO` | Button response, toast, count-up | 400-800ms |
-| `PROGRESS` | Banner, expanded card, status stamp | 1-2s or inline |
-| `MILESTONE` | Dismissible Monument overlay | Until dismissed |
-| `RECOVERY` | Calm inline panel | Persistent until context changes |
+| Level       | Presentation                        |                 Typical duration |
+| ----------- | ----------------------------------- | -------------------------------: |
+| `MICRO`     | Button response, toast, count-up    |                        400-800ms |
+| `PROGRESS`  | Banner, expanded card, status stamp |                   1-2s or inline |
+| `MILESTONE` | Dismissible Monument overlay        |                  Until dismissed |
+| `RECOVERY`  | Calm inline panel                   | Persistent until context changes |
 
 ## 4. Backend Event Catalog
 
-| Event | Trigger | Level | Required data |
-|---|---|---|---|
-| `HABIT_CREATED` | New habit successfully created | `PROGRESS` | `habitId`, `habitType` |
-| `FIRST_CHECK_IN` | First tracking event for BUILD habit | `PROGRESS` | `habitId`, `value=1` |
-| `DAILY_COMPLETION` | New BUILD completion created | `MICRO` | `habitId`, `value=currentStreak` |
-| `STREAK_STARTED` | Current streak changes `0 -> 1` | `PROGRESS` | `habitId`, `value=1` |
-| `STREAK_MILESTONE` | Current streak equals 3, 7, 14, 30, 60, or 100 | `MILESTONE` | `habitId`, `value` |
-| `PERSONAL_BEST` | Habit streak exceeds its previous longest streak | `MICRO` or `PROGRESS` | `habitId`, `value` |
-| `GOAL_HALFWAY` | Progress crosses from below 50% to at least 50% | `PROGRESS` | `goalId`, `value`, `target` |
-| `GOAL_NEARLY_REACHED` | Goal has one consecutive day remaining | `PROGRESS` | `goalId`, `value`, `target` |
-| `GOAL_COMPLETED` | Goal status transitions `ACTIVE -> COMPLETED` | `MILESTONE` | `goalId`, `target` |
-| `PERFECT_WEEK` | All seven eligible days completed at week end | `MILESTONE` | `habitId`, `value=7` |
-| `RELAPSE_RECORDED` | New relapse event created | `RECOVERY` | `habitId`, `previousValue`, `value=0` |
-| `COMEBACK` | New completion after configured inactivity period | `PROGRESS` | `habitId`, `daysAway` |
+| Event                 | Trigger                                           | Level                 | Required data                         |
+| --------------------- | ------------------------------------------------- | --------------------- | ------------------------------------- |
+| `HABIT_CREATED`       | New habit successfully created                    | `PROGRESS`            | `habitId`, `habitType`                |
+| `FIRST_CHECK_IN`      | First tracking event for BUILD habit              | `PROGRESS`            | `habitId`, `value=1`                  |
+| `DAILY_COMPLETION`    | New BUILD completion created                      | `MICRO`               | `habitId`, `value=currentStreak`      |
+| `STREAK_STARTED`      | Current streak changes `0 -> 1`                   | `PROGRESS`            | `habitId`, `value=1`                  |
+| `STREAK_MILESTONE`    | Current streak equals 3, 7, 14, 30, 60, or 100    | `MILESTONE`           | `habitId`, `value`                    |
+| `PERSONAL_BEST`       | Habit streak exceeds its previous longest streak  | `MICRO` or `PROGRESS` | `habitId`, `value`                    |
+| `GOAL_HALFWAY`        | Progress crosses from below 50% to at least 50%   | `PROGRESS`            | `goalId`, `value`, `target`           |
+| `GOAL_NEARLY_REACHED` | Goal has one consecutive day remaining            | `PROGRESS`            | `goalId`, `value`, `target`           |
+| `GOAL_COMPLETED`      | Goal status transitions `ACTIVE -> COMPLETED`     | `MILESTONE`           | `goalId`, `target`                    |
+| `PERFECT_WEEK`        | All seven eligible days completed at week end     | `MILESTONE`           | `habitId`, `value=7`                  |
+| `RELAPSE_RECORDED`    | New relapse event created                         | `RECOVERY`            | `habitId`, `previousValue`, `value=0` |
+| `COMEBACK`            | New completion after configured inactivity period | `PROGRESS`            | `habitId`, `daysAway`                 |
 
 Derived dashboard messages are not backend gamification events:
 
@@ -66,10 +66,7 @@ type CopyVariant = {
   action?: string;
 };
 
-type GamificationCopyCatalog = Record<
-  GamificationEventType,
-  CopyVariant[]
->;
+type GamificationCopyCatalog = Record<GamificationEventType, CopyVariant[]>;
 ```
 
 Rules:
@@ -84,19 +81,12 @@ Rules:
 Example selector:
 
 ```ts
-function selectCopyVariant(
-  event: GamificationEvent,
-  variants: CopyVariant[],
-): CopyVariant {
+function selectCopyVariant(event: GamificationEvent, variants: CopyVariant[]): CopyVariant {
   const key = `gamification-copy:${event.type}`;
   const previous = Number(sessionStorage.getItem(key));
-  const candidates = variants
-    .map((variant, index) => ({ variant, index }))
-    .filter(({ index }) => index !== previous);
+  const candidates = variants.map((variant, index) => ({ variant, index })).filter(({ index }) => index !== previous);
 
-  const selected = candidates[
-    Math.floor(Math.random() * candidates.length)
-  ];
+  const selected = candidates[Math.floor(Math.random() * candidates.length)];
 
   sessionStorage.setItem(key, String(selected.index));
   return selected.variant;
@@ -257,16 +247,16 @@ These messages are calculated from dashboard state and do not enter `meta.gamifi
 
 ## 8. Functional Responses Without Gamification
 
-| Action | Response |
-|---|---|
-| Completion removed | `Completion removed.` |
-| Relapse removed | `Record corrected. Your streak has been recalculated.` |
-| Habit updated | `Habit updated.` |
-| Goal updated | `Goal updated.` |
-| Habit deleted | `Habit deleted.` |
-| Goal deleted | `Goal deleted.` |
-| Validation error | Specific validation message |
-| Server error | Actionable error with retry option |
+| Action             | Response                                               |
+| ------------------ | ------------------------------------------------------ |
+| Completion removed | `Completion removed.`                                  |
+| Relapse removed    | `Record corrected. Your streak has been recalculated.` |
+| Habit updated      | `Habit updated.`                                       |
+| Goal updated       | `Goal updated.`                                        |
+| Habit deleted      | `Habit deleted.`                                       |
+| Goal deleted       | `Goal deleted.`                                        |
+| Validation error   | Specific validation message                            |
+| Server error       | Actionable error with retry option                     |
 
 These responses do not use large type, milestone overlay, or random celebratory copy.
 
@@ -294,26 +284,26 @@ Rules:
 
 ### Habit statistics
 
-| Stat | Used by |
-|---|---|
-| `currentStreak` | Daily completion, milestone, goal progress |
-| `longestStreak` | Personal best |
-| `totalCompletions` | First check-in |
-| `completedThisWeek` | Perfect week and weekly review |
-| `missedThisWeek` | Weekly review |
-| `eligibleDaysThisWeek` | Correct weekly denominator |
-| `weeklyCompletionRate` | Weekly review |
-| `lastRelapseDate` | BREAK recovery and clean streak |
+| Stat                   | Used by                                    |
+| ---------------------- | ------------------------------------------ |
+| `currentStreak`        | Daily completion, milestone, goal progress |
+| `longestStreak`        | Personal best                              |
+| `totalCompletions`     | First check-in                             |
+| `completedThisWeek`    | Perfect week and weekly review             |
+| `missedThisWeek`       | Weekly review                              |
+| `eligibleDaysThisWeek` | Correct weekly denominator                 |
+| `weeklyCompletionRate` | Weekly review                              |
+| `lastRelapseDate`      | BREAK recovery and clean streak            |
 
 ### Goal statistics
 
-| Stat | Used by |
-|---|---|
-| `currentProgress` | Halfway and near-completion events |
-| `targetStreakDays` | Goal progress and completion copy |
-| `percentage` | Halfway crossing |
-| `remainingDays` | Near-completion event |
-| `statusBefore/statusAfter` | Goal-completion transition |
+| Stat                       | Used by                            |
+| -------------------------- | ---------------------------------- |
+| `currentProgress`          | Halfway and near-completion events |
+| `targetStreakDays`         | Goal progress and completion copy  |
+| `percentage`               | Halfway crossing                   |
+| `remainingDays`            | Near-completion event              |
+| `statusBefore/statusAfter` | Goal-completion transition         |
 
 ### User statistics
 
@@ -331,12 +321,12 @@ These stats are dashboard/profile summaries, not gamification database state.
 
 ## 11. Visual Response Mapping
 
-| Level | Monument treatment |
-|---|---|
-| `MICRO` | Raised button press, count-up, compact stamp |
-| `PROGRESS` | Expanded card or horizontal deep-red banner |
+| Level       | Monument treatment                                               |
+| ----------- | ---------------------------------------------------------------- |
+| `MICRO`     | Raised button press, count-up, compact stamp                     |
+| `PROGRESS`  | Expanded card or horizontal deep-red banner                      |
 | `MILESTONE` | Full deep-red overlay, large condensed number, white raised logo |
-| `RECOVERY` | Warm-white/blush panel with calm supporting copy |
+| `RECOVERY`  | Warm-white/blush panel with calm supporting copy                 |
 
 ## 12. Accessibility and Motion
 

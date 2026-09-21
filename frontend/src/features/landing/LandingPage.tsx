@@ -6,6 +6,7 @@ import { useReducedMotion } from 'motion/react';
 import { HabitPreviewCard } from '../../components/ui/HabitPreviewCard';
 import { UserAvatar } from '../../components/ui/UserAvatar';
 import { localDate } from '../../lib/api';
+import { queryKeys } from '../../lib/queryKeys';
 import { useSession } from '../auth/auth.queries';
 import { dashboardApi } from '../dashboard/dashboard.api';
 import { habitsApi } from '../habits/habits.api';
@@ -41,11 +42,11 @@ function AnimatedHeadline() {
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
-    if (reduceMotion) { setActive(2); return; }
-    const interval = window.setInterval(
-      () => setActive((current) => (current + 1) % words.length),
-      2200,
-    );
+    if (reduceMotion) {
+      setActive(2);
+      return;
+    }
+    const interval = window.setInterval(() => setActive((current) => (current + 1) % words.length), 2200);
     return () => window.clearInterval(interval);
   }, [reduceMotion, words.length]);
 
@@ -66,10 +67,7 @@ function AnimatedActivityList() {
 
   useEffect(() => {
     if (reduceMotion) return;
-    const interval = window.setInterval(
-      () => setOffset((current) => (current + 1) % activity.length),
-      2600,
-    );
+    const interval = window.setInterval(() => setOffset((current) => (current + 1) % activity.length), 2600);
     return () => window.clearInterval(interval);
   }, [reduceMotion]);
 
@@ -84,7 +82,9 @@ function AnimatedActivityList() {
             key={label}
             style={{ '--index': index } as CSSProperties}
           >
-            <span className={styles.activityIcon}><Icon size={17} strokeWidth={2.4} /></span>
+            <span className={styles.activityIcon}>
+              <Icon size={17} strokeWidth={2.4} />
+            </span>
             <span>
               <strong>{label}</strong>
               <small>{meta}</small>
@@ -109,7 +109,18 @@ type ProductPreviewProps = {
   onToggle: () => void;
 };
 
-function ProductPreview({ avatarUser, dateLabel, done, habitName, momentum, pending, burstKey, streak, weekCompleted, onToggle }: ProductPreviewProps) {
+function ProductPreview({
+  avatarUser,
+  dateLabel,
+  done,
+  habitName,
+  momentum,
+  pending,
+  burstKey,
+  streak,
+  weekCompleted,
+  onToggle,
+}: ProductPreviewProps) {
   const completedDays = Math.min(7, Math.max(0, weekCompleted));
   return (
     <div className={styles.productStage}>
@@ -118,18 +129,31 @@ function ProductPreview({ avatarUser, dateLabel, done, habitName, momentum, pend
         <div className={styles.productBar}>
           <div className={styles.productUser}>
             <StepMark compact />
-            <span><b>Today</b><small>{dateLabel}</small></span>
+            <span>
+              <b>Today</b>
+              <small>{dateLabel}</small>
+            </span>
           </div>
-          {avatarUser
-            ? <Link className={styles.avatarLink} to="/app/settings"><UserAvatar username={avatarUser.username} email={avatarUser.email} /></Link>
-            : <Link className={styles.avatar} to="/login" aria-label="Log in">AV</Link>}
+          {avatarUser ? (
+            <Link className={styles.avatarLink} to="/app/settings">
+              <UserAvatar username={avatarUser.username} email={avatarUser.email} />
+            </Link>
+          ) : (
+            <Link className={styles.avatar} to="/login" aria-label="Log in">
+              AV
+            </Link>
+          )}
         </div>
 
         <div className={styles.productSummary}>
           <span className={styles.summaryKicker}>YOUR MOMENTUM</span>
           <div className={styles.summaryLine}>
             <strong className={done ? styles.numberPop : undefined}>{momentum}</strong>
-            <span>DAYS<br />MOVING.</span>
+            <span>
+              DAYS
+              <br />
+              MOVING.
+            </span>
           </div>
           <div className={styles.weekDots} aria-label={`${completedDays} of seven days completed`}>
             {[0, 1, 2, 3, 4, 5, 6].map((day) => (
@@ -140,14 +164,24 @@ function ProductPreview({ avatarUser, dateLabel, done, habitName, momentum, pend
           </div>
         </div>
 
-        <HabitPreviewCard name={habitName} streak={streak} done={done} pending={pending} burstKey={burstKey} onToggle={onToggle} />
+        <HabitPreviewCard
+          name={habitName}
+          streak={streak}
+          done={done}
+          pending={pending}
+          burstKey={burstKey}
+          onToggle={onToggle}
+        />
 
         <AnimatedActivityList />
       </div>
 
       <div className={styles.milestoneChip} role="status">
         <img src="/brand/motion/flame-active.svg" alt="" />
-        <span><b>PERSONAL BEST</b><small>One more day shaped.</small></span>
+        <span>
+          <b>PERSONAL BEST</b>
+          <small>One more day shaped.</small>
+        </span>
       </div>
     </div>
   );
@@ -160,7 +194,7 @@ export function LandingPage() {
   const [demoDone, setDemoDone] = useState(false);
   const [burstKey, setBurstKey] = useState(0);
   const dashboard = useQuery({
-    queryKey: ['dashboard'],
+    queryKey: queryKeys.dashboard,
     queryFn: dashboardApi.get,
     enabled: Boolean(user?.onboardingCompleted),
   });
@@ -168,30 +202,28 @@ export function LandingPage() {
   const liveHabit = liveDashboard?.habits.find((habit) => habit.type === 'BUILD');
   const liveDone = liveHabit?.todayStatus === 'COMPLETED';
   const completion = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       if (!liveHabit) return Promise.resolve();
       const date = liveDashboard?.date ?? localDate(user?.timezone);
-      return liveDone
-        ? habitsApi.removeCompletion(liveHabit.id, date)
-        : habitsApi.complete(liveHabit.id, date);
+      await (liveDone ? habitsApi.removeCompletion(liveHabit.id, date) : habitsApi.complete(liveHabit.id, date));
     },
     onSuccess: () => {
       if (!liveDone) {
         setBurstKey((current) => current + 1);
         window.setTimeout(() => setBurstKey(0), 900);
       }
-      void cache.invalidateQueries({ queryKey: ['dashboard'] });
+      void cache.invalidateQueries({ queryKey: queryKeys.dashboard });
     },
   });
   const done = liveHabit ? liveDone : demoDone;
   const streak = liveHabit?.statistics.currentStreak ?? (demoDone ? 18 : 17);
   const momentum = liveDashboard?.userStatistics.bestOverallStreak ?? (demoDone ? 13 : 12);
   const dateLabel = liveDashboard?.date
-    ? new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeZone: user?.timezone }).format(new Date(`${liveDashboard.date}T12:00:00`))
+    ? new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeZone: user?.timezone }).format(
+        new Date(`${liveDashboard.date}T12:00:00`),
+      )
     : 'Tuesday, 18 Sep';
-  const appDestination = user
-    ? (user.onboardingCompleted ? '/app' : '/onboarding')
-    : '/register';
+  const appDestination = user ? (user.onboardingCompleted ? '/app' : '/onboarding') : '/register';
   const toggleCompletion = () => {
     if (liveHabit) completion.mutate();
     else {
@@ -216,22 +248,31 @@ export function LandingPage() {
           <Link to="/brand-kit">Brand kit</Link>
           <Link to="/login">Log in</Link>
         </div>
-        <a className={styles.navCta} href="#start">Start shaping <ArrowRight size={16} /></a>
+        <a className={styles.navCta} href="#start">
+          Start shaping <ArrowRight size={16} />
+        </a>
       </nav>
 
       <section className={styles.hero} id="top">
         <div className={styles.heroCopy}>
-          <div className={styles.eyebrow}><span /> SMALL ACTIONS / VISIBLE PROGRESS</div>
+          <div className={styles.eyebrow}>
+            <span /> SMALL ACTIONS / VISIBLE PROGRESS
+          </div>
           <h1>
             <AnimatedHeadline />
             <span>WHAT HELPS.</span>
           </h1>
           <p>
-            Track the actions you want to build—or break. See your momentum clearly, and begin again without losing sight of how far you’ve come.
+            Track the actions you want to build—or break. See your momentum clearly, and begin again without losing
+            sight of how far you’ve come.
           </p>
           <div className={styles.heroActions}>
-            <a className={styles.raisedButton} href="#start">START WITH ONE HABIT <ArrowRight size={18} /></a>
-            <a className={styles.methodLink} href="#method">See the method</a>
+            <a className={styles.raisedButton} href="#start">
+              START WITH ONE HABIT <ArrowRight size={18} />
+            </a>
+            <a className={styles.methodLink} href="#method">
+              See the method
+            </a>
           </div>
         </div>
         <ProductPreview
@@ -251,7 +292,11 @@ export function LandingPage() {
       <section className={styles.momentumBand} aria-label="Habit Shaper promise">
         <div className={styles.momentumCopy}>
           <span>CONSISTENCY, MADE VISIBLE.</span>
-          <div className={styles.momentumSteps} aria-hidden="true"><i /><i /><i /></div>
+          <div className={styles.momentumSteps} aria-hidden="true">
+            <i />
+            <i />
+            <i />
+          </div>
           <span>PROGRESS, WITHOUT PUNISHMENT.</span>
         </div>
       </section>
@@ -259,48 +304,102 @@ export function LandingPage() {
       <section className={styles.methodSection} id="method">
         <header className={styles.sectionHeading}>
           <span>THE METHOD / 03 STEPS</span>
-          <h2>DON’T CHANGE EVERYTHING.<br />SHAPE ONE THING.</h2>
+          <h2>
+            DON’T CHANGE EVERYTHING.
+            <br />
+            SHAPE ONE THING.
+          </h2>
         </header>
         <div className={styles.methodMeter} aria-label="Three-step habit shaping method">
           <span />
-          <div aria-hidden="true"><i>1</i><i>2</i><i>3</i></div>
+          <div aria-hidden="true">
+            <i>1</i>
+            <i>2</i>
+            <i>3</i>
+          </div>
         </div>
         <div className={styles.methodSpine}>
-          <div className={styles.methodRail} aria-hidden="true"><i /></div>
+          <div className={styles.methodRail} aria-hidden="true">
+            <i />
+          </div>
           <article>
             <b>01</b>
-            <div><span>SET THE DIRECTION</span><h3>Choose the action.</h3><p>Build what helps or break what keeps pulling you back. Goals stay optional; the first commitment is simply one clear action.</p></div>
+            <div>
+              <span>SET THE DIRECTION</span>
+              <h3>Choose the action.</h3>
+              <p>
+                Build what helps or break what keeps pulling you back. Goals stay optional; the first commitment is
+                simply one clear action.
+              </p>
+            </div>
             <img src="/brand/icons/goal.svg" alt="" />
           </article>
           <article>
             <b>02</b>
-            <div><span>MAKE IT VISIBLE</span><h3>Show up today.</h3><p>Check in once. Habit Shaper records the day, updates the streak, and keeps the next action obvious.</p></div>
+            <div>
+              <span>MAKE IT VISIBLE</span>
+              <h3>Show up today.</h3>
+              <p>Check in once. Habit Shaper records the day, updates the streak, and keeps the next action obvious.</p>
+            </div>
             <img src="/brand/motion/completion-success.svg" alt="" />
           </article>
           <article>
             <b>03</b>
-            <div><span>LEARN THE PATTERN</span><h3>See the shape form.</h3><p>Streaks, completion rate, and personal bests turn repetition into evidence—without pretending every week is perfect.</p></div>
+            <div>
+              <span>LEARN THE PATTERN</span>
+              <h3>See the shape form.</h3>
+              <p>
+                Streaks, completion rate, and personal bests turn repetition into evidence—without pretending every week
+                is perfect.
+              </p>
+            </div>
             <img src="/brand/icons/statistics.svg" alt="" />
           </article>
         </div>
       </section>
 
-      <div className={styles.steppedSeparator} aria-hidden="true"><i /><i /><i /></div>
+      <div className={styles.steppedSeparator} aria-hidden="true">
+        <i />
+        <i />
+        <i />
+      </div>
 
       <section className={styles.progressSection} id="progress">
         <div className={styles.progressCopy}>
           <span className={styles.sectionLabel}>MOMENTUM, NOT PRESSURE</span>
-          <h2>A RESET IS DATA.<br />NOT A VERDICT.</h2>
-          <p>Habit Shaper remembers the work that came before. If a day goes sideways, record it honestly and keep moving with a clearer view of your pattern.</p>
+          <h2>
+            A RESET IS DATA.
+            <br />
+            NOT A VERDICT.
+          </h2>
+          <p>
+            Habit Shaper remembers the work that came before. If a day goes sideways, record it honestly and keep moving
+            with a clearer view of your pattern.
+          </p>
         </div>
         <div className={styles.recoveryCard}>
-          <div className={styles.recoveryIcon}><RotateCcw size={25} /></div>
+          <div className={styles.recoveryIcon}>
+            <RotateCcw size={25} />
+          </div>
           <span>RESET RECORDED.</span>
-          <strong>YOUR PROGRESS<br />STILL COUNTS.</strong>
+          <strong>
+            YOUR PROGRESS
+            <br />
+            STILL COUNTS.
+          </strong>
           <div className={styles.recoveryStats}>
-            <span><b>24</b><small>days shaped</small></span>
-            <span><b>6</b><small>best streak</small></span>
-            <span><b>82%</b><small>this month</small></span>
+            <span>
+              <b>24</b>
+              <small>days shaped</small>
+            </span>
+            <span>
+              <b>6</b>
+              <small>best streak</small>
+            </span>
+            <span>
+              <b>82%</b>
+              <small>this month</small>
+            </span>
           </div>
         </div>
       </section>
@@ -317,7 +416,10 @@ export function LandingPage() {
       </section>
 
       <footer className={styles.siteFooter}>
-        <a className={styles.brand} href="#top"><StepMark compact /><span>HABIT SHAPER</span></a>
+        <a className={styles.brand} href="#top">
+          <StepMark compact />
+          <span>HABIT SHAPER</span>
+        </a>
         <span>SMALL ACTIONS. VISIBLE PROGRESS.</span>
         <span>© 2026</span>
       </footer>

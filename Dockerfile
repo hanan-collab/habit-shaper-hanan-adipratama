@@ -6,6 +6,7 @@ FROM base AS dependencies
 COPY package.json package-lock.json ./
 COPY frontend/package.json ./frontend/package.json
 COPY backend/package.json ./backend/package.json
+COPY packages/contracts/package.json ./packages/contracts/package.json
 RUN npm ci
 COPY backend/prisma ./backend/prisma
 RUN npm run generate
@@ -13,7 +14,9 @@ RUN npm run generate
 FROM dependencies AS source
 COPY frontend ./frontend
 COPY backend ./backend
+COPY packages ./packages
 COPY tests ./tests
+COPY eslint.config.js .prettierrc.json .prettierignore ./
 
 FROM source AS frontend-build
 RUN npm run build --workspace frontend
@@ -22,7 +25,7 @@ FROM source AS backend-build
 RUN npm run build --workspace backend
 
 FROM source AS test
-CMD ["sh", "-c", "npm run typecheck && npm test && npm run test:smoke"]
+CMD ["sh", "-c", "npm run lint && npm run format:check && npm run typecheck && npm test && npm run test:smoke"]
 
 FROM dependencies AS production-dependencies
 RUN npm prune --omit=dev
@@ -33,6 +36,7 @@ COPY --from=production-dependencies --chown=node:node /app/node_modules ./node_m
 COPY --from=production-dependencies --chown=node:node /app/package*.json ./
 COPY --from=production-dependencies --chown=node:node /app/frontend/package.json ./frontend/package.json
 COPY --from=production-dependencies --chown=node:node /app/backend/package.json ./backend/package.json
+COPY --from=production-dependencies --chown=node:node /app/packages/contracts ./packages/contracts
 COPY --from=backend-build --chown=node:node /app/backend/dist ./backend/dist
 COPY --from=frontend-build --chown=node:node /app/frontend/dist ./frontend/dist
 COPY --chown=node:node backend/prisma ./backend/prisma

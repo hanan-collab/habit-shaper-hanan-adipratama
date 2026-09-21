@@ -1,3 +1,38 @@
-export class ApiError extends Error{constructor(public status:number,public code:string,message:string,public fields:Record<string,string[]>={}){super(message)}}
-export async function api<T>(path:string,init:RequestInit={}):Promise<T>{const response=await fetch(`/api${path}`,{...init,credentials:'same-origin',headers:{...(init.body?{'Content-Type':'application/json'}:{}),...init.headers}});if(response.status===204)return undefined as T;const payload=await response.json().catch(()=>({})) as {error?:{code?:string;message?:string;fields?:Record<string,string[]>}};if(!response.ok)throw new ApiError(response.status,payload.error?.code??'REQUEST_FAILED',payload.error?.message??'Request failed',payload.error?.fields);return payload as T}
-export const localDate=(timezone=Intl.DateTimeFormat().resolvedOptions().timeZone)=>{const parts=new Intl.DateTimeFormat('en-CA',{timeZone:timezone,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const values=Object.fromEntries(parts.map(part=>[part.type,part.value]));return `${values.year}-${values.month}-${values.day}`};
+export class ApiError extends Error {
+  constructor(
+    public status: number,
+    public code: string,
+    message: string,
+    public fields: Record<string, string[]> = {},
+  ) {
+    super(message);
+  }
+}
+export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const response = await fetch(`/api${path}`, {
+    ...init,
+    credentials: 'same-origin',
+    headers: { ...(init.body ? { 'Content-Type': 'application/json' } : {}), ...init.headers },
+  });
+  if (response.status === 204) return undefined as T;
+  const payload = (await response.json().catch(() => ({}))) as Partial<ErrorResponse>;
+  if (!response.ok)
+    throw new ApiError(
+      response.status,
+      payload.error?.code ?? 'REQUEST_FAILED',
+      payload.error?.message ?? 'Request failed',
+      payload.error?.fields,
+    );
+  return payload as T;
+}
+export const localDate = (timezone = Intl.DateTimeFormat().resolvedOptions().timeZone) => {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}`;
+};
+import type { ErrorResponse } from '@habit-shaper/contracts/response';

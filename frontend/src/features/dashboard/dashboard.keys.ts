@@ -1,1 +1,3 @@
-export const dashboardKey = ['dashboard'] as const;
+import { queryKeys } from '../../lib/queryKeys';
+
+export const dashboardKey = queryKeys.dashboard;

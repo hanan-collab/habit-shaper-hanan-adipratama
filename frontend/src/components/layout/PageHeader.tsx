@@ -1,1 +1,24 @@
-import type{ReactNode}from'react';import styles from'./PageHeader.module.css';export function PageHeader({eyebrow,title,summary,action}:{eyebrow:string;title:string;summary?:string;action?:ReactNode}){return <header className={styles.header}><div><span className="eyebrow">{eyebrow}</span><h1>{title}</h1>{summary&&<p>{summary}</p>}</div>{action}</header>}
+import type { ReactNode } from 'react';
+import styles from './PageHeader.module.css';
+export function PageHeader({
+  eyebrow,
+  title,
+  summary,
+  action,
+}: {
+  eyebrow: string;
+  title: string;
+  summary?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <header className={styles.header}>
+      <div>
+        <span className="eyebrow">{eyebrow}</span>
+        <h1>{title}</h1>
+        {summary && <p>{summary}</p>}
+      </div>
+      {action}
+    </header>
+  );
+}

@@ -5,7 +5,7 @@ import { createGoalController } from './goal.controller.js';
 import type { GoalService } from './goal.service.js';
 import type { CompositionService } from '../composition/composition.service.js';
 
-export function createGoalRoute(authService: AuthService, goalService: GoalService, composition?: CompositionService) {
+export function createGoalRoute(authService: AuthService, goalService: GoalService, composition: CompositionService) {
   const router = Router();
   const controller = createGoalController(goalService, composition);
   const authenticated = requireAuth(authService);

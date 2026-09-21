@@ -4,7 +4,13 @@ import type { HabitDetailModel, HabitEventModel, HabitModel } from './habit.mode
 export interface HabitRepository {
   list(userId: string): Promise<HabitModel[]>;
   findDetail(userId: string, habitId: string): Promise<HabitDetailModel | null>;
-  create(data: { userId: string; name: string; description?: string | null; type: HabitType; startDate: Date }): Promise<HabitModel>;
+  create(data: {
+    userId: string;
+    name: string;
+    description?: string | null;
+    type: HabitType;
+    startDate: Date;
+  }): Promise<HabitModel>;
   update(habitId: string, data: Prisma.HabitUpdateInput): Promise<HabitModel>;
   delete(habitId: string): Promise<void>;
   countEvents(habitId: string): Promise<number>;
@@ -18,13 +24,22 @@ export function createHabitRepository(prisma: PrismaClient | Prisma.TransactionC
     },
     findDetail(userId, habitId) {
       return prisma.habit.findFirst({
-        where: { id: habitId, userId }, include: { events: { orderBy: { date: 'asc' } } },
+        where: { id: habitId, userId },
+        include: { events: { orderBy: { date: 'asc' } } },
       });
     },
-    create(data) { return prisma.habit.create({ data }); },
-    update(habitId, data) { return prisma.habit.update({ where: { id: habitId }, data }); },
-    async delete(habitId) { await prisma.habit.delete({ where: { id: habitId } }); },
-    countEvents(habitId) { return prisma.habitEvent.count({ where: { habitId } }); },
+    create(data) {
+      return prisma.habit.create({ data });
+    },
+    update(habitId, data) {
+      return prisma.habit.update({ where: { id: habitId }, data });
+    },
+    async delete(habitId) {
+      await prisma.habit.delete({ where: { id: habitId } });
+    },
+    countEvents(habitId) {
+      return prisma.habitEvent.count({ where: { habitId } });
+    },
     findEarliestEvent(habitId) {
       return prisma.habitEvent.findFirst({ where: { habitId }, orderBy: { date: 'asc' } });
     },

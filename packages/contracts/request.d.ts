@@ -1,0 +1,21 @@
+export type HabitType = 'BUILD' | 'BREAK';
+export type NewGoalRequest = { title: string; targetDays: number; deadline?: string | null };
+export type CreateHabitRequest = {
+  name: string;
+  description?: string | null;
+  type: HabitType;
+  startDate?: string;
+  goalIds?: string[];
+  newGoals?: NewGoalRequest[];
+};
+export type UpdateHabitRequest = { name?: string; description?: string | null; type?: HabitType; startDate?: string };
+export type UpdateHabitGoalsRequest = { goalIds: string[]; newGoals: NewGoalRequest[] };
+export type NewHabitRequest = { name: string; type: HabitType };
+export type CreateGoalRequest = { title: string; targetDays: number; deadline?: string | null };
+export type CreateMultiGoalRequest = CreateGoalRequest & { habitIds: string[]; newHabits?: NewHabitRequest[] };
+export type UpdateGoalRequest = Partial<CreateMultiGoalRequest>;
+export type LoginRequest = { email: string; password: string };
+export type RegisterRequest = LoginRequest & { timezone?: string };
+export type CompleteOnboardingRequest = { completed: true; timezone: string };
+export type UpdateProfileRequest = { username: string; timezone: string };
+export type TrackingEventRequest = { note?: string | null };

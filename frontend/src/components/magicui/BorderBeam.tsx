@@ -1,1 +1,5 @@
-import type{CSSProperties}from'react';import styles from'./Magic.module.css';export function BorderBeam({color='#ffffff'}:{color?:string}){return <span className={styles.borderBeam} style={{'--beam-color':color}as CSSProperties} aria-hidden="true"/>}
+import type { CSSProperties } from 'react';
+import styles from './Magic.module.css';
+export function BorderBeam({ color = '#ffffff' }: { color?: string }) {
+  return <span className={styles.borderBeam} style={{ '--beam-color': color } as CSSProperties} aria-hidden="true" />;
+}

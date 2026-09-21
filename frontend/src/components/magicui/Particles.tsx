@@ -1,1 +1,37 @@
-import{motion,useReducedMotion}from'motion/react';import type{CSSProperties}from'react';import styles from'./Magic.module.css';const particles=Array.from({length:24},(_,index)=>({angle:index/24*Math.PI*2,distance:35+(index%6)*12,size:3+(index%3)*2,color:index%3===0?'#FFFFFF':index%3===1?'#E67A72':'#F8DEDB'}));export function Particles({burstKey,className=''}:{burstKey:string|number;className?:string}){const reduced=useReducedMotion();if(reduced)return null;return <div key={burstKey} className={`${styles.particleLayer} ${className}`} data-testid="particle-burst" aria-hidden="true">{particles.map((particle,index)=><motion.i className={styles.particle} key={index} style={{'--size':`${particle.size}px`,'--color':particle.color}as CSSProperties} initial={{x:0,y:0,opacity:1,scale:.4}} animate={{x:Math.cos(particle.angle)*particle.distance,y:Math.sin(particle.angle)*particle.distance,opacity:0,scale:1}} transition={{duration:.7,delay:(index%4)*.018,ease:'easeOut'}}/>)}</div>}
+import { motion, useReducedMotion } from 'motion/react';
+import type { CSSProperties } from 'react';
+import styles from './Magic.module.css';
+const particles = Array.from({ length: 24 }, (_, index) => ({
+  angle: (index / 24) * Math.PI * 2,
+  distance: 35 + (index % 6) * 12,
+  size: 3 + (index % 3) * 2,
+  color: index % 3 === 0 ? '#FFFFFF' : index % 3 === 1 ? '#E67A72' : '#F8DEDB',
+}));
+export function Particles({ burstKey, className = '' }: { burstKey: string | number; className?: string }) {
+  const reduced = useReducedMotion();
+  if (reduced) return null;
+  return (
+    <div
+      key={burstKey}
+      className={`${styles.particleLayer} ${className}`}
+      data-testid="particle-burst"
+      aria-hidden="true"
+    >
+      {particles.map((particle, index) => (
+        <motion.i
+          className={styles.particle}
+          key={index}
+          style={{ '--size': `${particle.size}px`, '--color': particle.color } as CSSProperties}
+          initial={{ x: 0, y: 0, opacity: 1, scale: 0.4 }}
+          animate={{
+            x: Math.cos(particle.angle) * particle.distance,
+            y: Math.sin(particle.angle) * particle.distance,
+            opacity: 0,
+            scale: 1,
+          }}
+          transition={{ duration: 0.7, delay: (index % 4) * 0.018, ease: 'easeOut' }}
+        />
+      ))}
+    </div>
+  );
+}

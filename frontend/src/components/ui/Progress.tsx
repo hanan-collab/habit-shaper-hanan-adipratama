@@ -1,3 +1,43 @@
 import styles from './Progress.module.css';
-export function LinearProgress({value,max,label}:{value:number;max:number;label:string}){const percent=max?Math.min(100,Math.max(0,value/max*100)):0;return <div className={styles.linearWrap}><div className={styles.linearLabels}><span>{label}</span><strong>{value} / {max}</strong></div><div className={styles.track} role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={max} aria-valuenow={value}><span style={{width:`${percent}%`}}/></div></div>}
-export function CircularProgress({value,label,size=116}:{value:number;label:string;size?:number}){const safe=Math.min(100,Math.max(0,value));return <div className={styles.circle} style={{width:size,height:size,background:`conic-gradient(var(--deep-red) ${safe}%,var(--blush) 0)`}} role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={safe}><div><strong>{Math.round(safe)}%</strong><span>{label}</span></div></div>}
+export function LinearProgress({ value, max, label }: { value: number; max: number; label: string }) {
+  const percent = max ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
+  return (
+    <div className={styles.linearWrap}>
+      <div className={styles.linearLabels}>
+        <span>{label}</span>
+        <strong>
+          {value} / {max}
+        </strong>
+      </div>
+      <div
+        className={styles.track}
+        role="progressbar"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={max}
+        aria-valuenow={value}
+      >
+        <span style={{ width: `${percent}%` }} />
+      </div>
+    </div>
+  );
+}
+export function CircularProgress({ value, label, size = 116 }: { value: number; label: string; size?: number }) {
+  const safe = Math.min(100, Math.max(0, value));
+  return (
+    <div
+      className={styles.circle}
+      style={{ width: size, height: size, background: `conic-gradient(var(--deep-red) ${safe}%,var(--blush) 0)` }}
+      role="progressbar"
+      aria-label={label}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={safe}
+    >
+      <div>
+        <strong>{Math.round(safe)}%</strong>
+        <span>{label}</span>
+      </div>
+    </div>
+  );
+}

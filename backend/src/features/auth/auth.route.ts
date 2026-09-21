@@ -9,11 +9,17 @@ export function createAuthRoute(service: AuthService, config: { cookieSecure: bo
   const controller = createAuthController(service, config);
   const authenticated = requireAuth(service);
   const registerLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: 'draft-8', legacyHeaders: false,
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
     message: { error: { code: 'RATE_LIMITED', message: 'Too many registration attempts; try again later' } },
   });
   const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: 'draft-8', legacyHeaders: false,
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
     skipSuccessfulRequests: true,
     message: { error: { code: 'RATE_LIMITED', message: 'Too many login attempts; try again later' } },
   });

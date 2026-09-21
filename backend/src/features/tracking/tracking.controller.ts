@@ -1,6 +1,6 @@
 import type { RequestHandler, Response } from 'express';
 import { parseBody, parseInput } from '../../common/validation.js';
-import { trackingEventDto, trackingParamsDto } from './tracking.dto.js';
+import { trackingEventRequestSchema, trackingParamsSchema } from './dto/request/tracking.request.js';
 import { TrackingEventKind } from './tracking.enum.js';
 import type { TrackingService } from './tracking.service.js';
 
@@ -15,20 +15,24 @@ export type TrackingController = {
 };
 
 export function createTrackingController(service: TrackingService): TrackingController {
-  const put = (kind: TrackingEventKind): RequestHandler => async (request, response) => {
-    const path = params(trackingParamsDto, request.params, response);
-    const input = parseBody(trackingEventDto, request.body, response);
-    if (!path || !input) return;
-    response.json(await service.put(
-      request.authUser!.id, request.authUser!.timezone, path.habitId, path.date, kind, input,
-    ));
-  };
-  const remove = (kind: TrackingEventKind): RequestHandler => async (request, response) => {
-    const path = params(trackingParamsDto, request.params, response);
-    if (!path) return;
-    await service.delete(request.authUser!.id, request.authUser!.timezone, path.habitId, path.date, kind);
-    response.status(204).send();
-  };
+  const put =
+    (kind: TrackingEventKind): RequestHandler =>
+    async (request, response) => {
+      const path = params(trackingParamsSchema, request.params, response);
+      const input = parseBody(trackingEventRequestSchema, request.body, response);
+      if (!path || !input) return;
+      response.json(
+        await service.put(request.authUser!.id, request.authUser!.timezone, path.habitId, path.date, kind, input),
+      );
+    };
+  const remove =
+    (kind: TrackingEventKind): RequestHandler =>
+    async (request, response) => {
+      const path = params(trackingParamsSchema, request.params, response);
+      if (!path) return;
+      await service.delete(request.authUser!.id, request.authUser!.timezone, path.habitId, path.date, kind);
+      response.status(204).send();
+    };
   return {
     putCompletion: put(TrackingEventKind.Completed),
     deleteCompletion: remove(TrackingEventKind.Completed),

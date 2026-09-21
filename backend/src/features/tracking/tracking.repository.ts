@@ -3,7 +3,12 @@ import type { PutTrackingEventModel, TrackingSourceModel } from './tracking.mode
 
 export interface TrackingRepository {
   findSource(userId: string, habitId: string): Promise<TrackingSourceModel | null>;
-  putEvent(data: { habitId: string; type: HabitEventType; date: Date; note?: string | null }): Promise<PutTrackingEventModel>;
+  putEvent(data: {
+    habitId: string;
+    type: HabitEventType;
+    date: Date;
+    note?: string | null;
+  }): Promise<PutTrackingEventModel>;
   deleteEvent(habitId: string, date: Date, type: HabitEventType): Promise<void>;
 }
 

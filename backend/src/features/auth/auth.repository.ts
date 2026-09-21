@@ -15,7 +15,11 @@ const publicUserSelect = {
 
 export interface AuthRepository {
   createUserWithSession(input: {
-    email: string; passwordHash: string; timezone: string; tokenHash: string; expiresAt: Date;
+    email: string;
+    passwordHash: string;
+    timezone: string;
+    tokenHash: string;
+    expiresAt: Date;
   }): Promise<PublicUser>;
   findAccountByEmail(email: string): Promise<AccountModel | null>;
   createSession(input: { userId: string; tokenHash: string; expiresAt: Date }): Promise<void>;
@@ -34,7 +38,12 @@ export function createAuthRepository(prisma: PrismaClient): AuthRepository {
       try {
         return await prisma.$transaction(async (transaction) => {
           const user = await transaction.user.create({
-            data: { email: input.email, username: input.email.split('@')[0], passwordHash: input.passwordHash, timezone: input.timezone },
+            data: {
+              email: input.email,
+              username: input.email.split('@')[0],
+              passwordHash: input.passwordHash,
+              timezone: input.timezone,
+            },
             select: publicUserSelect,
           });
           await transaction.session.create({
@@ -72,7 +81,9 @@ export function createAuthRepository(prisma: PrismaClient): AuthRepository {
     },
     completeOnboarding(userId, timezone) {
       return prisma.user.update({
-        where: { id: userId }, data: { onboardingCompleted: true, timezone }, select: publicUserSelect,
+        where: { id: userId },
+        data: { onboardingCompleted: true, timezone },
+        select: publicUserSelect,
       });
     },
     updateProfile(userId, input) {

@@ -1,1 +1,10 @@
-export{TextAnimate}from'./TextAnimate';export{BlurFade}from'./BlurFade';export{AnimatedList}from'./AnimatedList';export{NumberTicker}from'./NumberTicker';export{Particles}from'./Particles';export{MagicCard}from'./MagicCard';export{BorderBeam}from'./BorderBeam';export{AnimatedShinyText}from'./AnimatedShinyText';export{Dock,DockItem}from'./Dock';export{AnimatedGridPattern}from'./AnimatedGridPattern';
+export { TextAnimate } from './TextAnimate';
+export { BlurFade } from './BlurFade';
+export { AnimatedList } from './AnimatedList';
+export { NumberTicker } from './NumberTicker';
+export { Particles } from './Particles';
+export { MagicCard } from './MagicCard';
+export { BorderBeam } from './BorderBeam';
+export { AnimatedShinyText } from './AnimatedShinyText';
+export { Dock, DockItem } from './Dock';
+export { AnimatedGridPattern } from './AnimatedGridPattern';

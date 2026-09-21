@@ -33,19 +33,19 @@ User
 
 ```ts
 enum HabitType {
-  BUILD = "BUILD",
-  BREAK = "BREAK",
+  BUILD = 'BUILD',
+  BREAK = 'BREAK',
 }
 
 enum HabitEventType {
-  COMPLETED = "COMPLETED",
-  RELAPSED = "RELAPSED",
+  COMPLETED = 'COMPLETED',
+  RELAPSED = 'RELAPSED',
 }
 
 enum GoalStatus {
-  ACTIVE = "ACTIVE",
-  COMPLETED = "COMPLETED",
-  CANCELLED = "CANCELLED",
+  ACTIVE = 'ACTIVE',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
 }
 ```
 
@@ -101,28 +101,16 @@ Contoh service:
 
 ```ts
 export class UserStatsService {
-  aggregate(
-    habits: HabitWithStats[],
-    totalGoalsCompleted: number,
-  ): UserStats {
-    const build = habits.filter((habit) => habit.type === "BUILD");
-    const breaking = habits.filter((habit) => habit.type === "BREAK");
+  aggregate(habits: HabitWithStats[], totalGoalsCompleted: number): UserStats {
+    const build = habits.filter((habit) => habit.type === 'BUILD');
+    const breaking = habits.filter((habit) => habit.type === 'BREAK');
 
-    const bestBuildStreak = Math.max(
-      0,
-      ...build.map((habit) => habit.stats.longestStreak),
-    );
+    const bestBuildStreak = Math.max(0, ...build.map((habit) => habit.stats.longestStreak));
 
-    const bestBreakStreak = Math.max(
-      0,
-      ...breaking.map((habit) => habit.stats.longestStreak),
-    );
+    const bestBreakStreak = Math.max(0, ...breaking.map((habit) => habit.stats.longestStreak));
 
     return {
-      totalBuildCompletions: build.reduce(
-        (total, habit) => total + habit.stats.totalCompletions,
-        0,
-      ),
+      totalBuildCompletions: build.reduce((total, habit) => total + habit.stats.totalCompletions, 0),
       totalGoalsCompleted,
       bestBuildStreak,
       bestBreakStreak,
@@ -147,30 +135,23 @@ Service ini tidak:
 - Berjalan melalui cron atau background worker.
 
 ```ts
-export type GamificationAction =
-  | "HABIT_CREATED"
-  | "BUILD_COMPLETED"
-  | "BREAK_RELAPSED";
+export type GamificationAction = 'HABIT_CREATED' | 'BUILD_COMPLETED' | 'BREAK_RELAPSED';
 
-export type GamificationLevel =
-  | "MICRO"
-  | "PROGRESS"
-  | "MILESTONE"
-  | "RECOVERY";
+export type GamificationLevel = 'MICRO' | 'PROGRESS' | 'MILESTONE' | 'RECOVERY';
 
 export type GamificationEventType =
-  | "HABIT_CREATED"
-  | "FIRST_CHECK_IN"
-  | "DAILY_COMPLETION"
-  | "STREAK_STARTED"
-  | "STREAK_MILESTONE"
-  | "PERSONAL_BEST"
-  | "GOAL_HALFWAY"
-  | "GOAL_NEARLY_REACHED"
-  | "GOAL_COMPLETED"
-  | "PERFECT_WEEK"
-  | "RELAPSE_RECORDED"
-  | "COMEBACK";
+  | 'HABIT_CREATED'
+  | 'FIRST_CHECK_IN'
+  | 'DAILY_COMPLETION'
+  | 'STREAK_STARTED'
+  | 'STREAK_MILESTONE'
+  | 'PERSONAL_BEST'
+  | 'GOAL_HALFWAY'
+  | 'GOAL_NEARLY_REACHED'
+  | 'GOAL_COMPLETED'
+  | 'PERFECT_WEEK'
+  | 'RELAPSE_RECORDED'
+  | 'COMEBACK';
 
 export interface GamificationEvent {
   type: GamificationEventType;
@@ -185,15 +166,15 @@ export interface GamificationEvent {
 
 ## 4. Action-Specific Rule Matrix
 
-| Action | Rules evaluated |
-|---|---|
-| `HABIT_CREATED` | Habit-created response only |
-| `BUILD_COMPLETED` | First check-in, daily completion, streak start, milestone, personal best, goal crossing, perfect week, comeback |
-| `BREAK_RELAPSED` | Relapse recovery only |
-| Completion removed | No celebration; recalculate stats |
-| Relapse removed | No celebration; recalculate stats |
-| Goal create/edit/cancel | No celebration |
-| Dashboard/detail GET | No gamification overlay; derived inline messages only |
+| Action                  | Rules evaluated                                                                                                 |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `HABIT_CREATED`         | Habit-created response only                                                                                     |
+| `BUILD_COMPLETED`       | First check-in, daily completion, streak start, milestone, personal best, goal crossing, perfect week, comeback |
+| `BREAK_RELAPSED`        | Relapse recovery only                                                                                           |
+| Completion removed      | No celebration; recalculate stats                                                                               |
+| Relapse removed         | No celebration; recalculate stats                                                                               |
+| Goal create/edit/cancel | No celebration                                                                                                  |
+| Dashboard/detail GET    | No gamification overlay; derived inline messages only                                                           |
 
 ## 5. Build Completion Flow
 
@@ -215,8 +196,8 @@ Pseudocode:
 async function completeBuildHabit(input: CompleteHabitInput) {
   const habit = await getOwnedHabit(input.userId, input.habitId);
 
-  if (habit.type !== "BUILD") {
-    throw new ValidationError("Only BUILD habits can be completed");
+  if (habit.type !== 'BUILD') {
+    throw new ValidationError('Only BUILD habits can be completed');
   }
 
   const before = await habitStatsService.calculate(habit);
@@ -232,13 +213,10 @@ async function completeBuildHabit(input: CompleteHabitInput) {
   }
 
   const after = await habitStatsService.calculate(habit);
-  const goalAfter = await goalService.syncAfterStreakChange(
-    habit,
-    after.currentStreak,
-  );
+  const goalAfter = await goalService.syncAfterStreakChange(habit, after.currentStreak);
 
   const gamificationEvents = gamificationService.evaluate({
-    action: "BUILD_COMPLETED",
+    action: 'BUILD_COMPLETED',
     habit,
     before,
     after,
@@ -301,7 +279,7 @@ if (goalBefore.percentage < 50 && goalAfter.percentage >= 50) {
   // GOAL_HALFWAY
 }
 
-if (goalBefore.status === "ACTIVE" && goalAfter.status === "COMPLETED") {
+if (goalBefore.status === 'ACTIVE' && goalAfter.status === 'COMPLETED') {
   // GOAL_COMPLETED
 }
 ```
@@ -438,4 +416,3 @@ backend/src/modules/
 - Deleting/correcting an event changes calculated stats automatically.
 - Gamification service remains pure and independently unit-testable.
 - Frontend can render all responses using only event `type`, `level`, and numeric context.
-

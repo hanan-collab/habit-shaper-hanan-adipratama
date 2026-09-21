@@ -5,7 +5,11 @@ import { createHabitController } from './habit.controller.js';
 import type { HabitService } from './habit.service.js';
 import type { CompositionService } from '../composition/composition.service.js';
 
-export function createHabitRoute(authService: AuthService, habitService: HabitService, composition?: CompositionService) {
+export function createHabitRoute(
+  authService: AuthService,
+  habitService: HabitService,
+  composition: CompositionService,
+) {
   const router = Router();
   const controller = createHabitController(habitService, composition);
   router.use(requireAuth(authService));

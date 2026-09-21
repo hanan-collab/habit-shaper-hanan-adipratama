@@ -1,1 +1,3 @@
-import{api}from'../../lib/api';import type{Dashboard}from'../../types/domain';export const dashboardApi={get:()=>api<{dashboard:Dashboard}>('/dashboard')};
+import { api } from '../../lib/api';
+import type { DashboardResponse } from './dto/response/dashboard.response';
+export const dashboardApi = { get: () => api<DashboardResponse>('/dashboard') };

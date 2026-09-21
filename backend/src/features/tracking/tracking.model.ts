@@ -1,5 +1,6 @@
 import type { Habit, HabitEvent } from '@prisma/client';
-import type { GamificationMetaDto } from '../gamification/gamification.dto.js';
+import { toCalendarDate } from '../../common/calendar-date.js';
+import type { GamificationMetaResponse } from '../gamification/dto/response/gamification.response.js';
 import type { GoalGamificationState } from '../gamification/gamification.model.js';
 import type { HabitStatisticsModel } from '../statistics/statistics.model.js';
 
@@ -12,10 +13,11 @@ export type TrackingActionModel = {
     stats: HabitStatisticsModel;
     goal: GoalGamificationState | null;
   };
-  meta: GamificationMetaDto;
+  meta: GamificationMetaResponse;
 };
 
 export const trackingEventResponse = (event: HabitEvent) => ({
   ...event,
-  date: event.date.toISOString().slice(0, 10),
+  date: toCalendarDate(event.date),
+  createdAt: event.createdAt.toISOString(),
 });
