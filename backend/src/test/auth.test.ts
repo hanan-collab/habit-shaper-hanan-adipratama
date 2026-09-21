@@ -26,6 +26,8 @@ function service(overrides: Partial<AuthService> = {}): AuthService {
     getUserForToken: vi.fn(async (token) => token ? user : null),
     logout: vi.fn(async () => undefined),
     completeOnboarding: vi.fn(async () => ({ ...user, onboardingCompleted: true })),
+    updateProfile: vi.fn(async (_userId, input) => ({ ...user, ...input })),
+    deleteAccount: vi.fn(async () => undefined),
     ...overrides,
   };
 }
@@ -86,9 +88,22 @@ describe('auth HTTP API', () => {
       expect(response.body.user.onboardingCompleted).toBe(true);
     });
     expect(auth.completeOnboarding).toHaveBeenCalledWith(user.id, { completed: true, timezone: 'Asia/Jakarta' });
+    await agent.patch('/api/auth/me').send({ username: 'New Name', timezone: 'Asia/Makassar' }).expect(200).expect((response) => {
+      expect(response.body.user.username).toBe('New Name');
+      expect(response.body.user.timezone).toBe('Asia/Makassar');
+    });
+    expect(auth.updateProfile).toHaveBeenCalledWith(user.id, { username: 'New Name', timezone: 'Asia/Makassar' });
     const logout = await agent.post('/api/auth/logout').expect(204);
     expect(logout.headers['set-cookie'][0]).toMatch(/^habit_session=;/);
     expect(auth.logout).toHaveBeenCalledWith('login-token');
+  });
+
+  test('deletes an authenticated account and clears its cookie', async () => {
+    const auth = service();
+    const app = createApp({ healthService, authService: auth });
+    const response = await request(app).delete('/api/auth/me').set('Cookie', 'habit_session=valid-token').expect(204);
+    expect(auth.deleteAccount).toHaveBeenCalledWith(user.id);
+    expect(response.headers['set-cookie'][0]).toMatch(/^habit_session=;/);
   });
 
   test('returns generic credential and authentication errors', async () => {

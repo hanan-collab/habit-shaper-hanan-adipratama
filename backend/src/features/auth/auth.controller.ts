@@ -1,7 +1,7 @@
 import type { CookieOptions, RequestHandler } from 'express';
 import { parseBody } from '../../common/validation.js';
 import { SESSION_COOKIE_NAME } from './auth.enum.js';
-import { loginDto, onboardingDto, registerDto } from './auth.dto.js';
+import { loginDto, onboardingDto, profileDto, registerDto } from './auth.dto.js';
 import type { AuthService } from './auth.service.js';
 
 type ControllerConfig = { cookieSecure: boolean };
@@ -18,6 +18,8 @@ export type AuthController = {
   logout: RequestHandler;
   me: RequestHandler;
   completeOnboarding: RequestHandler;
+  updateProfile: RequestHandler;
+  deleteAccount: RequestHandler;
 };
 
 export function createAuthController(service: AuthService, config: ControllerConfig): AuthController {
@@ -49,6 +51,17 @@ export function createAuthController(service: AuthService, config: ControllerCon
       if (!input) return;
       const user = await service.completeOnboarding(request.authUser!.id, input);
       response.json({ user });
+    },
+    updateProfile: async (request, response) => {
+      const input = parseBody(profileDto, request.body, response);
+      if (!input) return;
+      const user = await service.updateProfile(request.authUser!.id, input);
+      response.json({ user });
+    },
+    deleteAccount: async (request, response) => {
+      await service.deleteAccount(request.authUser!.id);
+      response.clearCookie(SESSION_COOKIE_NAME, cookieOptions(config));
+      response.status(204).send();
     },
   };
 }

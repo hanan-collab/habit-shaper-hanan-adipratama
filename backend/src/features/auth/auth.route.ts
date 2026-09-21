@@ -22,6 +22,8 @@ export function createAuthRoute(service: AuthService, config: { cookieSecure: bo
   router.post('/login', loginLimiter, controller.login);
   router.post('/logout', controller.logout);
   router.get('/me', authenticated, controller.me);
+  router.patch('/me', authenticated, controller.updateProfile);
+  router.delete('/me', authenticated, controller.deleteAccount);
   router.patch('/onboarding', authenticated, controller.completeOnboarding);
   return router;
 }

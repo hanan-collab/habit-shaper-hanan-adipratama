@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, Check, RotateCcw, Sparkles, Target } from 'lucide-react';
 import { Link } from 'react-router';
+import { useReducedMotion } from 'motion/react';
 import { HabitPreviewCard } from '../../components/ui/HabitPreviewCard';
 import { UserAvatar } from '../../components/ui/UserAvatar';
 import { localDate } from '../../lib/api';
@@ -37,14 +38,16 @@ function StepMark({ compact = false }: { compact?: boolean }) {
 function AnimatedHeadline() {
   const words = useMemo(() => ['BUILD.', 'BREAK.', 'SHAPE.'], []);
   const [active, setActive] = useState(0);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
+    if (reduceMotion) { setActive(2); return; }
     const interval = window.setInterval(
       () => setActive((current) => (current + 1) % words.length),
       2200,
     );
     return () => window.clearInterval(interval);
-  }, [words.length]);
+  }, [reduceMotion, words.length]);
 
   return (
     <span className={styles.rotatingWord} aria-live="polite">
@@ -59,14 +62,16 @@ function AnimatedHeadline() {
 
 function AnimatedActivityList() {
   const [offset, setOffset] = useState(0);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
+    if (reduceMotion) return;
     const interval = window.setInterval(
       () => setOffset((current) => (current + 1) % activity.length),
       2600,
     );
     return () => window.clearInterval(interval);
-  }, []);
+  }, [reduceMotion]);
 
   const ordered = activity.map((_, index) => activity[(index + offset) % activity.length]);
 
@@ -209,6 +214,7 @@ export function LandingPage() {
           <a href="#method">How it works</a>
           <a href="#progress">Progress</a>
           <Link to="/brand-kit">Brand kit</Link>
+          <Link to="/login">Log in</Link>
         </div>
         <a className={styles.navCta} href="#start">Start shaping <ArrowRight size={16} /></a>
       </nav>

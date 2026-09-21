@@ -24,6 +24,8 @@ export interface AuthRepository {
   deleteSessionByTokenHash(tokenHash: string): Promise<void>;
   touchSession(id: string, date: Date): Promise<void>;
   completeOnboarding(userId: string, timezone: string): Promise<PublicUser>;
+  updateProfile(userId: string, input: { username: string; timezone: string }): Promise<PublicUser>;
+  deleteUser(userId: string): Promise<void>;
 }
 
 export function createAuthRepository(prisma: PrismaClient): AuthRepository {
@@ -72,6 +74,12 @@ export function createAuthRepository(prisma: PrismaClient): AuthRepository {
       return prisma.user.update({
         where: { id: userId }, data: { onboardingCompleted: true, timezone }, select: publicUserSelect,
       });
+    },
+    updateProfile(userId, input) {
+      return prisma.user.update({ where: { id: userId }, data: input, select: publicUserSelect });
+    },
+    async deleteUser(userId) {
+      await prisma.user.deleteMany({ where: { id: userId } });
     },
   };
 }

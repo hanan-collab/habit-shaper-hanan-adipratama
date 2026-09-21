@@ -52,27 +52,27 @@ describe('Today cards', () => {
   });
 });
 
-test('Quick Add exposes type choices and multi-goal cards without a preview', () => {
+test('Quick Add exposes type choices and stages existing goals in a preview', () => {
   const onType = vi.fn();
   const onSelectedGoalIds = vi.fn();
   render(<QuickAddDialog type="BUILD" typeLocked={false} value="Read" pending={false} onType={onType} onChange={vi.fn()} onClose={vi.fn()} onSubmit={vi.fn()} goals={[goal, { ...goal, id: 'goal-2', title: 'Second goal' }]} goalMode="existing" onGoalMode={vi.fn()} selectedGoalIds={['goal-1']} onSelectedGoalIds={onSelectedGoalIds} newGoalTitle="" onNewGoalTitle={vi.fn()} newGoalTarget={7} onNewGoalTarget={vi.fn()} newGoalDeadline="" onNewGoalDeadline={vi.fn()} minimumDeadline="2026-09-20" />);
-  expect(screen.queryByText('Preview')).not.toBeInTheDocument();
+  expect(screen.getByText('Existing')).toBeInTheDocument();
   expect(screen.getByRole('radio', { name: /Build/ })).toBeChecked();
   fireEvent.click(screen.getByRole('radio', { name: /Break/ }));
   expect(onType).toHaveBeenCalledWith('BREAK');
-  expect(screen.getByRole('button', { name: /Focused week/ })).toHaveAttribute('aria-pressed', 'true');
-  fireEvent.click(screen.getByRole('button', { name: /Second goal/ }));
+  fireEvent.change(screen.getByLabelText('Search connected goals'), { target: { value: 'Second' } });
+  fireEvent.click(screen.getByRole('option', { name: /Second goal/ }));
   expect(onSelectedGoalIds).toHaveBeenCalledWith(['goal-1', 'goal-2']);
 });
 
-test('Quick Add new goal uses a designed optional deadline field', () => {
-  const onNewGoalDeadline = vi.fn();
-  render(<QuickAddDialog type="BREAK" typeLocked={false} value="No soda" pending={false} onType={vi.fn()} onChange={vi.fn()} onClose={vi.fn()} onSubmit={vi.fn()} goals={[]} goalMode="new" onGoalMode={vi.fn()} selectedGoalIds={[]} onSelectedGoalIds={vi.fn()} newGoalTitle="Clear month" onNewGoalTitle={vi.fn()} newGoalTarget={30} onNewGoalTarget={vi.fn()} newGoalDeadline="" onNewGoalDeadline={onNewGoalDeadline} minimumDeadline="2026-09-20" />);
-  const deadline = screen.getByLabelText('Deadline (optional)');
-  expect(deadline).toHaveAttribute('type', 'date');
-  expect(deadline).toHaveAttribute('min', '2026-09-20');
-  fireEvent.change(deadline, { target: { value: '2026-10-20' } });
-  expect(onNewGoalDeadline).toHaveBeenCalledWith('2026-10-20');
+test('Quick Add stages new goals through the shared composer', () => {
+  const onDraftGoals = vi.fn();
+  render(<QuickAddDialog type="BREAK" typeLocked={false} value="No soda" pending={false} onType={vi.fn()} onChange={vi.fn()} onClose={vi.fn()} onSubmit={vi.fn()} goals={[]} goalMode="new" onGoalMode={vi.fn()} selectedGoalIds={[]} onSelectedGoalIds={vi.fn()} newGoalTitle="" onNewGoalTitle={vi.fn()} newGoalTarget={7} onNewGoalTarget={vi.fn()} newGoalDeadline="" onNewGoalDeadline={vi.fn()} minimumDeadline="2026-09-20" draftGoals={[]} onDraftGoals={onDraftGoals} />);
+  fireEvent.change(screen.getByLabelText('New goal title'), { target: { value: 'Clear month' } });
+  fireEvent.change(screen.getByLabelText('Target days'), { target: { value: '30' } });
+  fireEvent.change(screen.getByLabelText('Goal deadline'), { target: { value: '2026-10-20' } });
+  fireEvent.click(screen.getByRole('button', { name: /Add goal/ }));
+  expect(onDraftGoals).toHaveBeenCalledWith([expect.objectContaining({ title: 'Clear month', targetDays: 30, deadline: '2026-10-20' })]);
   expect(quickGoalInput('  Clear month ', 30, '', 'habit-1')).toEqual({ title: 'Clear month', targetDays: 30, deadline: null, habitIds: ['habit-1'] });
   expect(quickGoalInput('Clear month', 30, '2026-10-20', 'habit-1').deadline).toBe('2026-10-20');
 });

@@ -9,7 +9,8 @@ export const goalIdParamsDto = z.strictObject({ goalId: z.string().uuid() });
 export const habitGoalParamsDto = z.strictObject({ habitId: z.string().uuid() });
 export const createMultiGoalDto = z.strictObject({
   title: z.string().trim().min(1).max(191), targetDays: z.number().int().min(1).max(100000),
-  deadline: dateOnly.nullable().optional(), habitIds: z.array(z.string().uuid()).min(1).max(100),
+  deadline: dateOnly.nullable().optional(), habitIds: z.array(z.string().uuid()).max(100).default([]),
+  newHabits: z.array(z.strictObject({ name: z.string().trim().min(1).max(191), type: z.enum(['BUILD', 'BREAK']) })).max(100).optional(),
 });
 export const createGoalDto = z.strictObject({
   title: z.string().trim().min(1).max(191),
@@ -21,6 +22,7 @@ export const updateGoalDto = z.strictObject({
   targetDays: z.number().int().min(1).max(100000).optional(),
   deadline: dateOnly.nullable().optional(),
   habitIds: z.array(z.string().uuid()).min(1).max(100).optional(),
+  newHabits: createMultiGoalDto.shape.newHabits.optional(),
 }).refine((value) => Object.keys(value).length > 0, 'At least one field is required');
 
 export const connectGoalDto = z.strictObject({ goalIds: z.array(z.string().uuid()).max(100) });

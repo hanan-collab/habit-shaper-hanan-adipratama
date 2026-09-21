@@ -18,6 +18,7 @@ import { createTrackingRepository } from './features/tracking/tracking.repositor
 import { createTrackingService } from './features/tracking/tracking.service.js';
 import { createUserStatisticsService } from './features/user-statistics/user-statistics.service.js';
 import { prisma } from './lib/prisma.js';
+import { createCompositionService } from './features/composition/composition.service.js';
 
 const authRepository = createAuthRepository(prisma);
 const authService = createAuthService(authRepository, {
@@ -29,6 +30,7 @@ const statisticsService = createStatisticsService(createStatisticsRepository(pri
 const gamificationService = createGamificationService();
 const goalService = createGoalService(createGoalRepository(prisma));
 const habitService = createHabitService(createHabitRepository(prisma), gamificationService, goalService);
+const compositionService = createCompositionService(prisma, gamificationService);
 const trackingService = createTrackingService(
   createTrackingRepository(prisma), statisticsService, goalService, gamificationService,
 );
@@ -43,6 +45,7 @@ const app = createApp({
   goalService,
   dashboardService,
   trackingService,
+  compositionService,
   cookieSecure: env.COOKIE_SECURE,
   frontendDirectory: fileURLToPath(new URL('../../frontend/dist/', import.meta.url)),
 });

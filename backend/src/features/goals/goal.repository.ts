@@ -20,7 +20,9 @@ export interface GoalRepository {
   delete(goalId: string): Promise<void>;
 }
 
-export function createGoalRepository(prisma: PrismaClient): GoalRepository {
+type DatabaseClient = PrismaClient | Prisma.TransactionClient;
+
+export function createGoalRepository(prisma: DatabaseClient): GoalRepository {
   return {
     list: (userId) => prisma.goal.findMany({ where: { userId }, include, orderBy: { createdAt: 'asc' } }),
     find: (userId, id) => prisma.goal.findFirst({ where: { id, userId }, include }),
@@ -33,21 +35,17 @@ export function createGoalRepository(prisma: PrismaClient): GoalRepository {
     }, include }),
     async update(id, data) { await prisma.goal.update({ where: { id }, data }); },
     async replaceLinks(goalId, habitIds, date) {
-      await prisma.$transaction(async (tx) => {
-        const active = await tx.goalHabit.findMany({ where: { goalId, disconnectedOn: null } });
-        await tx.goalHabit.updateMany({ where: { goalId, disconnectedOn: null, habitId: { notIn: habitIds } }, data: { disconnectedOn: date } });
+        const active = await prisma.goalHabit.findMany({ where: { goalId, disconnectedOn: null } });
+        await prisma.goalHabit.updateMany({ where: { goalId, disconnectedOn: null, habitId: { notIn: habitIds } }, data: { disconnectedOn: date } });
         const existing = new Set(active.map((link) => link.habitId));
         const additions = habitIds.filter((id) => !existing.has(id));
-        if (additions.length) await tx.goalHabit.createMany({ data: additions.map((habitId) => ({ goalId, habitId, connectedOn: date })) });
-      });
+        if (additions.length) await prisma.goalHabit.createMany({ data: additions.map((habitId) => ({ goalId, habitId, connectedOn: date })) });
     },
     async connect(habitId, goalIds, date) {
-      await prisma.$transaction(async (tx) => {
         for (const goalId of goalIds) {
-          const active = await tx.goalHabit.findFirst({ where: { goalId, habitId, disconnectedOn: null } });
-          if (!active) await tx.goalHabit.create({ data: { goalId, habitId, connectedOn: date } });
+          const active = await prisma.goalHabit.findFirst({ where: { goalId, habitId, disconnectedOn: null } });
+          if (!active) await prisma.goalHabit.create({ data: { goalId, habitId, connectedOn: date } });
         }
-      });
     },
     async disconnectHabit(userId, habitId, date) {
       await prisma.goalHabit.updateMany({ where: { habitId, disconnectedOn: null, goal: { userId, status: 'ACTIVE' } }, data: { disconnectedOn: date } });

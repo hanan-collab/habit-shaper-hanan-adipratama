@@ -3,10 +3,11 @@ import { requireAuth } from '../auth/auth.middleware.js';
 import type { AuthService } from '../auth/auth.service.js';
 import { createGoalController } from './goal.controller.js';
 import type { GoalService } from './goal.service.js';
+import type { CompositionService } from '../composition/composition.service.js';
 
-export function createGoalRoute(authService: AuthService, goalService: GoalService) {
+export function createGoalRoute(authService: AuthService, goalService: GoalService, composition?: CompositionService) {
   const router = Router();
-  const controller = createGoalController(goalService);
+  const controller = createGoalController(goalService, composition);
   const authenticated = requireAuth(authService);
   router.get('/goals', authenticated, controller.list);
   router.post('/goals', authenticated, controller.createMulti);

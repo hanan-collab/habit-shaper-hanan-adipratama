@@ -38,12 +38,13 @@ export function createHabitService(repository: HabitRepository, gamification: Ga
     async list(userId) { return (await repository.list(userId)).map(habitResponse); },
     async get(userId, habitId) { return habitDetailResponse(await find(userId, habitId)); },
     async create(userId, timezone, input) {
-      if (input.startDate > todayIn(timezone)) {
+      const startDate = input.startDate ?? todayIn(timezone);
+      if (startDate > todayIn(timezone)) {
         throw new AppError(400, HabitErrorCode.InvalidStartDate, 'Habit start date cannot be in the future');
       }
       const habit = habitResponse(await repository.create({
         userId, name: input.name, description: input.description, type: input.type as HabitType,
-        startDate: toDateOnly(input.startDate),
+        startDate: toDateOnly(startDate),
       }));
       return {
         habit,

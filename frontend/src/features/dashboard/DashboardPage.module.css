@@ -1147,5 +1147,22 @@
 
 @media (max-width: 430px) {
   .habitStreak > div { min-height: 52px; }
-  .habitStreak strong { min-width: 50px; font-size: 3.5rem; }
+  .habitStreak strong { min-width: 58px; font-size: 4rem; }
+}
+
+/* Keep the streak numeral optically equal to the animated flame on every card size. */
+.habitStreak strong,
+.habitStreak strong .habitStreakNumber {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 4.75rem;
+  font-weight: 900;
+  line-height: .72;
+}
+.habitStreak strong { min-width: 72px; }
+.habitStreak img { width: 52px; height: 52px; }
+@media (max-width: 430px) {
+  .habitStreak strong,
+  .habitStreak strong .habitStreakNumber { font-size: 4.25rem; }
+  .habitStreak strong { min-width: 62px; }
+  .habitStreak img { width: 48px; height: 48px; }
 }

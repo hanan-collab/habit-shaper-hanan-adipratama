@@ -42,7 +42,8 @@ const service = () => createTrackingService(
 
 describe('tracking service', () => {
   test('creates a BUILD completion with fresh stats and semantic events', async () => {
-    const result = await service().put('user-1', 'UTC', source.id, today, TrackingEventKind.Completed, {});
+    const result = await service().put('user-1', 'UTC', source.id, today, TrackingEventKind.Completed, { note: 'must be ignored' });
+    expect(repository.putEvent).toHaveBeenCalledWith(expect.objectContaining({ note: undefined }));
     expect(result.data.stats).toMatchObject({ currentStreak: 1, totalCompletions: 1 });
     expect(result.meta.gamificationEvents.map(({ type }) => type)).toEqual([
       'PERSONAL_BEST', 'FIRST_CHECK_IN', 'STREAK_STARTED', 'DAILY_COMPLETION',
@@ -65,7 +66,8 @@ describe('tracking service', () => {
   test('returns only a recovery event for a BREAK relapse', async () => {
     source = { ...habit('BREAK'), events: [] };
     repository.putEvent = vi.fn(async () => ({ event: event('RELAPSED'), created: true }));
-    const result = await service().put('user-1', 'UTC', source.id, today, TrackingEventKind.Relapsed, {});
+    const result = await service().put('user-1', 'UTC', source.id, today, TrackingEventKind.Relapsed, { note: 'trigger' });
+    expect(repository.putEvent).toHaveBeenCalledWith(expect.objectContaining({ note: 'trigger' }));
     expect(result.meta.gamificationEvents).toEqual([
       expect.objectContaining({ type: 'RELAPSE_RECORDED', level: 'RECOVERY', value: 0 }),
     ]);

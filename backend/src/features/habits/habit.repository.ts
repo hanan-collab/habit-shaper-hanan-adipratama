@@ -11,7 +11,7 @@ export interface HabitRepository {
   findEarliestEvent(habitId: string): Promise<HabitEventModel | null>;
 }
 
-export function createHabitRepository(prisma: PrismaClient): HabitRepository {
+export function createHabitRepository(prisma: PrismaClient | Prisma.TransactionClient): HabitRepository {
   return {
     list(userId) {
       return prisma.habit.findMany({ where: { userId }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] });

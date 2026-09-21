@@ -1,2 +1,40 @@
-import{useMemo,useState}from'react';import{useQuery}from'@tanstack/react-query';import{Link}from'react-router';import{PageHeader}from'../../components/layout/PageHeader';import{HabitIcon}from'../../components/ui/HabitIcon';import type{HabitType}from'../../types/domain';import{dashboardApi}from'../dashboard/dashboard.api';import{dashboardKey}from'../dashboard/DashboardPage';import styles from'./HabitsPage.module.css';
-export function HabitsPage(){const[search,setSearch]=useState('');const[filter,setFilter]=useState<'ALL'|HabitType>('ALL');const query=useQuery({queryKey:dashboardKey,queryFn:dashboardApi.get});const habits=useMemo(()=>query.data?.dashboard.habits.filter(habit=>(filter==='ALL'||habit.type===filter)&&habit.name.toLowerCase().includes(search.toLowerCase()))??[],[query.data,filter,search]);return <><PageHeader eyebrow="Habit library" title="Your habits." summary="Every check-in and reset belongs to a habit. Keep the list focused on actions you can see." action={<Link className="raisedPrimary" to="/app/habits/new">Create habit</Link>}/><section className={styles.tools}><label><span className="srOnly">Search habits</span><input value={search} onChange={event=>setSearch(event.target.value)} placeholder="Search habits…"/></label><div role="group" aria-label="Filter habits">{(['ALL','BUILD','BREAK']as const).map(value=><button key={value} onClick={()=>setFilter(value)} className={filter===value?styles.active:undefined}>{value[0]+value.slice(1).toLowerCase()}</button>)}</div></section>{query.isLoading?<div className={styles.grid}><div className="skeleton"/><div className="skeleton"/></div>:query.isError?<section className="panel"><h2>We couldn't load your habits.</h2><button className="raisedSecondary" onClick={()=>query.refetch()}>Retry</button></section>:habits.length?<section className={styles.grid}>{habits.map(habit=><Link key={habit.id} className={`${styles.card} raisedCard`} to={`/app/habits/${habit.id}`}><div className={styles.cardTop}><span><HabitIcon seed={habit.id}/>{habit.type}</span><b>{habit.todayStatus}</b></div><h3>{habit.name}</h3><p>{habit.description||'One clear action. One visible pattern.'}</p><div className={styles.metrics}><div><strong>{habit.statistics.currentStreak}</strong><span>{habit.type==='BUILD'?'current streak':'days clear'}</span></div><div><strong>{habit.statistics.longestStreak}</strong><span>personal best</span></div><div><strong>{Math.round(habit.statistics.weeklyCompletionRate)}%</strong><span>this week</span></div></div><footer><span>Daily · started {habit.startDate}</span><strong>Open habit →</strong></footer></Link>)}</section>:<section className={styles.empty}><img src="/brand/patterns/step-grid.svg" alt=""/><p className="eyebrow">{search||filter!=='ALL'?'No matching habit':'Your pattern starts here'}</p><h2>{search||filter!=='ALL'?'No matching habit.':'Start with one thing.'}</h2><p>{search||filter!=='ALL'?'Try a different search or clear the filter.':'Create one action you can return to today.'}</p>{search||filter!=='ALL'?<button className="raisedSecondary" onClick={()=>{setSearch('');setFilter('ALL')}}>Clear filter</button>:<Link className="raisedPrimary" to="/app/habits/new">Create first habit</Link>}</section>}</>}
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useReducedMotion } from 'motion/react';
+import { Link } from 'react-router';
+import { PageHeader } from '../../components/layout/PageHeader';
+import { HabitCard } from '../../components/ui/TrackingCards';
+import type { GamificationEvent, HabitType } from '../../types/domain';
+import { dashboardApi } from '../dashboard/dashboard.api';
+import { dashboardKey } from '../dashboard/dashboard.keys';
+import { EventResponse } from '../gamification/EventResponse';
+import { useHabitAction } from './useHabitAction';
+import styles from './HabitsPage.module.css';
+
+export function HabitsPage() {
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState<'ALL' | HabitType>('ALL');
+  const [events, setEvents] = useState<GamificationEvent[]>([]);
+  const reducedMotion = useReducedMotion();
+  const query = useQuery({ queryKey: dashboardKey, queryFn: dashboardApi.get });
+  const allHabits = query.data?.dashboard.habits ?? [];
+  const habitAction = useHabitAction(allHabits, setEvents);
+  const habits = useMemo(() => allHabits.filter(habit =>
+    (filter === 'ALL' || habit.type === filter) && habit.name.toLowerCase().includes(search.trim().toLowerCase())
+  ), [allHabits, filter, search]);
+  const filtered = Boolean(search.trim() || filter !== 'ALL');
+
+  return <>
+    <PageHeader eyebrow="Habit library" title="Habits." action={<Link className="raisedPrimary" to="/app/habits/new">Create habit</Link>} />
+    <section className={styles.tools}>
+      <label><span className="srOnly">Search habits</span><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search habits…" /></label>
+      <div role="group" aria-label="Filter habits">{(['ALL', 'BUILD', 'BREAK'] as const).map(value => <button key={value} onClick={() => setFilter(value)} className={filter === value ? styles.active : undefined}>{value[0] + value.slice(1).toLowerCase()}</button>)}</div>
+    </section>
+    {query.isLoading ? <div className={styles.grid}><div className="skeleton" /><div className="skeleton" /></div>
+      : query.isError ? <section className="panel"><h2>We couldn't load your habits.</h2><button className="raisedSecondary" onClick={() => query.refetch()}>Retry</button></section>
+      : habits.length ? <section className={styles.grid}>{habits.map((habit, index) => <HabitCard key={habit.id} habit={habit} variant="library" index={index} reducedMotion={Boolean(reducedMotion)} burst={habitAction.burstId === habit.id} pending={habitAction.pendingId === habit.id} onAction={() => habitAction.act(habit)} />)}</section>
+      : <section className={styles.empty}><img src="/brand/patterns/step-grid.svg" alt="" /><h2>{filtered ? 'No matches.' : 'No habits yet.'}</h2><p>{filtered ? 'Try another search or filter.' : 'Create one daily action.'}</p>{filtered ? <button className="raisedSecondary" onClick={() => { setSearch(''); setFilter('ALL'); }}>Clear filters</button> : <Link className="raisedPrimary" to="/app/habits/new">Create habit</Link>}</section>}
+    {habitAction.dialog}
+    <EventResponse events={events} onDismiss={() => setEvents([])} />
+  </>;
+}

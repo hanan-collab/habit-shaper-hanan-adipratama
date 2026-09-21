@@ -5,6 +5,7 @@ import { authApi } from '../../features/auth/auth.api';
 import { sessionKey, useSession } from '../../features/auth/auth.queries';
 import { Dock, DockItem } from '../magicui';
 import { UserAvatar } from '../ui/UserAvatar';
+import { useToast } from '../ui/ToastProvider';
 import styles from './AppShell.module.css';
 
 const links = [
@@ -19,10 +20,15 @@ export function AppShell() {
   const cache = useQueryClient();
   const session = useSession();
   const user = session.data?.user;
+  const { pushToast } = useToast();
   const logout = async () => {
-    await authApi.logout();
-    cache.setQueryData(sessionKey, null);
-    navigate('/');
+    try {
+      await authApi.logout();
+      cache.setQueryData(sessionKey, null);
+      navigate('/');
+    } catch {
+      pushToast({ variant: 'error', title: 'Could not log out', message: 'Your session is still active. Check your connection and try again.' });
+    }
   };
   return <div className={styles.layout}>
     <main className={styles.main}><Outlet /></main>

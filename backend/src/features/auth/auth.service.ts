@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import { createHash, randomBytes } from 'node:crypto';
 import { AppError } from '../../common/app-error.js';
-import type { LoginDto, OnboardingDto, RegisterDto } from './auth.dto.js';
+import type { LoginDto, OnboardingDto, ProfileDto, RegisterDto } from './auth.dto.js';
 import { AuthErrorCode } from './auth.enum.js';
 import type { AuthResult, PublicUser } from './auth.model.js';
 import { DuplicateEmailRepositoryError, type AuthRepository } from './auth.repository.js';
@@ -12,6 +12,8 @@ export interface AuthService {
   getUserForToken(token: string): Promise<PublicUser | null>;
   logout(token: string): Promise<void>;
   completeOnboarding(userId: string, input: OnboardingDto): Promise<PublicUser>;
+  updateProfile(userId: string, input: ProfileDto): Promise<PublicUser>;
+  deleteAccount(userId: string): Promise<void>;
 }
 
 type ServiceConfig = { bcryptRounds: number; sessionTtlDays: number };
@@ -75,6 +77,12 @@ export function createAuthService(repository: AuthRepository, config: ServiceCon
     },
     completeOnboarding(userId, input) {
       return repository.completeOnboarding(userId, input.timezone);
+    },
+    updateProfile(userId, input) {
+      return repository.updateProfile(userId, input);
+    },
+    deleteAccount(userId) {
+      return repository.deleteUser(userId);
     },
   };
 }

@@ -2,12 +2,13 @@ import type { RequestHandler } from 'express';
 import { parseBody, parseInput } from '../../common/validation.js';
 import { connectGoalDto, createGoalDto, createMultiGoalDto, goalIdParamsDto, habitGoalParamsDto, updateGoalDto } from './goal.dto.js';
 import type { GoalService } from './goal.service.js';
+import type { CompositionService } from '../composition/composition.service.js';
 
 export type GoalController = {
   list: RequestHandler; create: RequestHandler; createMulti: RequestHandler; connect: RequestHandler; update: RequestHandler; delete: RequestHandler; cancel: RequestHandler;
 };
 
-export function createGoalController(service: GoalService): GoalController {
+export function createGoalController(service: GoalService, composition?: CompositionService): GoalController {
   return {
     list: async (request, response) => {
       response.json({ goals: await service.list(request.authUser!.id, request.authUser!.timezone) });
@@ -22,7 +23,8 @@ export function createGoalController(service: GoalService): GoalController {
     createMulti: async (request, response) => {
       const input = parseBody(createMultiGoalDto, request.body, response);
       if (!input) return;
-      response.status(201).json({ goal: await service.createMulti(request.authUser!.id, request.authUser!.timezone, input) });
+      if (composition) response.status(201).json(await composition.createGoal(request.authUser!.id, request.authUser!.timezone, input));
+      else response.status(201).json({ goal: await service.createMulti(request.authUser!.id, request.authUser!.timezone, input) });
     },
     connect: async (request, response) => {
       const path = parseInput(habitGoalParamsDto, request.params, response, 'Request parameters are invalid');
@@ -34,7 +36,8 @@ export function createGoalController(service: GoalService): GoalController {
       const path = parseInput(goalIdParamsDto, request.params, response, 'Request parameters are invalid');
       const input = parseBody(updateGoalDto, request.body, response);
       if (!path || !input) return;
-      response.json({ goal: await service.update(request.authUser!.id, request.authUser!.timezone, path.goalId, input) });
+      if (composition) response.json(await composition.updateGoal(request.authUser!.id, request.authUser!.timezone, path.goalId, input));
+      else response.json({ goal: await service.update(request.authUser!.id, request.authUser!.timezone, path.goalId, input) });
     },
     delete: async (request, response) => {
       const path = parseInput(goalIdParamsDto, request.params, response, 'Request parameters are invalid');

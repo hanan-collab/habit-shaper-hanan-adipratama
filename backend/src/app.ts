@@ -16,6 +16,7 @@ import { createDashboardRoute } from './features/dashboard/dashboard.route.js';
 import type { DashboardService } from './features/dashboard/dashboard.service.js';
 import { createTrackingRoute } from './features/tracking/tracking.route.js';
 import type { TrackingService } from './features/tracking/tracking.service.js';
+import type { CompositionService } from './features/composition/composition.service.js';
 
 type AppOptions = {
   healthService: HealthService;
@@ -25,6 +26,7 @@ type AppOptions = {
   goalService?: GoalService;
   dashboardService?: DashboardService;
   trackingService?: TrackingService;
+  compositionService?: CompositionService;
   cookieSecure?: boolean;
   frontendDirectory?: string;
 };
@@ -37,11 +39,11 @@ export function createApp(options: AppOptions) {
   app.use('/api/health', createHealthRoute(options.healthService));
   if (options.authService) {
     app.use('/api/auth', createAuthRoute(options.authService, { cookieSecure: options.cookieSecure ?? false }));
-    if (options.goalService) app.use('/api', createGoalRoute(options.authService, options.goalService));
+    if (options.goalService) app.use('/api', createGoalRoute(options.authService, options.goalService, options.compositionService));
     if (options.dashboardService) app.use('/api/dashboard', createDashboardRoute(options.authService, options.dashboardService));
     if (options.statisticsService) app.use('/api/habits', createStatisticsRoute(options.authService, options.statisticsService));
     if (options.trackingService) app.use('/api/habits', createTrackingRoute(options.authService, options.trackingService));
-    if (options.habitService) app.use('/api/habits', createHabitRoute(options.authService, options.habitService));
+    if (options.habitService) app.use('/api/habits', createHabitRoute(options.authService, options.habitService, options.compositionService));
   }
   app.use('/api', (_request, response) => { response.status(404).json({ error: 'Not found' }); });
   if (options.frontendDirectory) {

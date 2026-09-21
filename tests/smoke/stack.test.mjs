@@ -103,12 +103,12 @@ test('register, session authentication, onboarding, logout, and login work end t
 
     const buildHabitResponse = await call('/api/habits', {
       method: 'POST', headers: { cookie: loginCookie },
-      body: JSON.stringify({ name: 'Read', description: 'Smoke habit', type: 'BUILD', startDate: '2026-09-01' }),
+      body: JSON.stringify({ name: 'Read', description: 'Smoke habit', type: 'BUILD' }),
     });
     assert.equal(buildHabitResponse.status, 201);
     const buildHabitBody = await buildHabitResponse.json();
     const buildHabit = buildHabitBody.habit;
-    assert.equal(buildHabit.startDate, '2026-09-01');
+    assert.equal(buildHabit.startDate, localDate('Asia/Jakarta'));
     assert.deepEqual(buildHabitBody.meta.gamificationEvents.map(({ type }) => type), ['HABIT_CREATED']);
     const completion = await call(`/api/habits/${buildHabit.id}/completions/${trackingDate}`, {
       method: 'PUT', headers: { cookie: loginCookie }, body: JSON.stringify({ note: 'done' }),

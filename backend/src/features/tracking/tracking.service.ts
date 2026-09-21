@@ -59,7 +59,8 @@ export function createTrackingService(
         ? source.events.filter((item) => item.type === TrackingEventKind.Completed && dateKey(item.date) < date).at(-1)
         : undefined;
       const result = await repository.putEvent({
-        habitId, type: kind as HabitEventType, date: trackingDate(date), note: input.note,
+        habitId, type: kind as HabitEventType, date: trackingDate(date),
+        note: kind === TrackingEventKind.Relapsed ? input.note : undefined,
       });
       if (!result.created) {
         return {

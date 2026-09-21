@@ -1,7 +1,8 @@
 import { api } from '../../lib/api';
 import type { Goal } from '../../types/domain';
+import type { DraftHabit } from '../../components/ui/RelationComposer';
 export type GoalInput = { title: string; targetDays: number; deadline?: string | null };
-export type MultiGoalInput = GoalInput & { habitIds: string[] };
+export type MultiGoalInput = GoalInput & { habitIds: string[]; newHabits?: Omit<DraftHabit, 'key'>[] };
 export const goalsApi = {
   list: () => api<{ goals: Goal[] }>('/goals'),
   create: (habitId: string, input: GoalInput) => api<{ goal: Goal }>(`/habits/${habitId}/goals`, { method: 'POST', body: JSON.stringify(input) }),
